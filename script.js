@@ -47,6 +47,10 @@ function drawStars() {
       s.x = Math.random() * starCanvas.width;
     }
   });
+
+  // draw jetpack flames on top of stars
+  drawFlames(starCtx);
+
   requestAnimationFrame(drawStars);
 }
 
@@ -319,21 +323,7 @@ let trexX = mouseX;
 let trexY = mouseY;
 let lastDir = 'right';
 
-// Jetpack flame particle system
-const flameCanvas = document.createElement('canvas');
-flameCanvas.id = 'flame-canvas';
-flameCanvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9998;pointer-events:none;';
-document.body.appendChild(flameCanvas);
-const flameCtx = flameCanvas.getContext('2d');
-flameCtx.imageSmoothingEnabled = false;
-
-function resizeFlameCanvas() {
-  flameCanvas.width = window.innerWidth;
-  flameCanvas.height = window.innerHeight;
-}
-resizeFlameCanvas();
-window.addEventListener('resize', resizeFlameCanvas);
-
+// Jetpack flame particles (drawn on star canvas)
 const flameParticles = [];
 const FLAME_COLORS = ['#ff4422', '#ff6b2b', '#ffcc00', '#ff8844', '#ff2200'];
 
@@ -353,8 +343,7 @@ function spawnFlame(x, y) {
   }
 }
 
-function updateFlames() {
-  flameCtx.clearRect(0, 0, flameCanvas.width, flameCanvas.height);
+function drawFlames(ctx) {
   for (let i = flameParticles.length - 1; i >= 0; i--) {
     const p = flameParticles[i];
     p.x += p.vx;
@@ -367,13 +356,12 @@ function updateFlames() {
       continue;
     }
 
-    flameCtx.globalAlpha = p.life;
-    flameCtx.fillStyle = p.color;
-    // draw as pixel blocks for pixel art style
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
     const s = Math.floor(p.size);
-    flameCtx.fillRect(Math.floor(p.x), Math.floor(p.y), s, s);
+    ctx.fillRect(Math.floor(p.x), Math.floor(p.y), s, s);
   }
-  flameCtx.globalAlpha = 1;
+  ctx.globalAlpha = 1;
 }
 
 function updateTrex() {
@@ -402,14 +390,10 @@ function updateTrex() {
 
   // spawn jetpack flames when moving
   if (dist > 3) {
-    // nozzle position: below the jetpack on the back
     const nozzleOffsetX = lastDir === 'right' ? -20 : 20;
     const nozzleOffsetY = 30;
     spawnFlame(trexX + nozzleOffsetX, trexY + nozzleOffsetY + bounce);
   }
-
-  // always update flame rendering
-  updateFlames();
 
   requestAnimationFrame(updateTrex);
 }
