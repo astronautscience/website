@@ -244,9 +244,12 @@ function createTrexSprite() {
   const H = '#7b68ee'; // helmet frame purple
   const V = '#2a2a6e'; // visor glass dark
   const O = '#ff6b2b'; // orange accent
+  const J = '#555570'; // jetpack body
+  const P = '#3a3a50'; // jetpack dark
+  const R = '#ff4422'; // jetpack nozzle red
   const _ = null;      // transparent
 
-  // 24x22 T-Rex astronaut facing RIGHT with tail extending LEFT
+  // 24x22 T-Rex astronaut facing RIGHT with jetpack on back
   const sprite = [
     [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,H,H,H,H,H,_,_,_,_],
     [_,_,_,_,_,_,_,_,_,_,_,_,_,H,H,V,V,V,V,V,H,_,_,_],
@@ -257,13 +260,13 @@ function createTrexSprite() {
     [_,_,_,_,_,_,_,_,_,_,_,_,_,H,D,G,G,G,G,G,G,G,H,_],
     [_,_,_,_,_,_,_,_,_,_,_,_,_,_,H,W,_,W,_,G,G,H,_,_],
     [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,H,H,H,H,H,H,_,_,_],
-    [_,_,_,_,_,_,_,_,_,_,_,_,_,S,S,L,S,S,S,_,_,_,_,_],
-    [_,_,_,_,_,_,_,_,_,_,_,_,S,S,O,S,S,S,S,S,_,_,_,_],
-    [_,_,_,_,_,_,_,_,_,_,_,_,S,L,S,S,S,S,S,S,_,_,_,_],
-    [_,_,_,_,_,_,_,_,_,_,_,_,S,S,S,S,S,S,S,G,G,_,_,_],
-    [_,_,_,_,_,_,_,_,_,_,_,_,_,S,O,O,O,O,S,_,_,_,_,_],
-    [_,_,_,_,_,_,_,_,_,_,_,_,_,S,S,S,S,S,S,_,_,_,_,_],
-    [_,_,_,_,_,_,_,_,_,_,_,S,S,S,_,S,S,_,S,S,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,P,P,_,S,S,L,S,S,S,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,P,J,J,S,S,O,S,S,S,S,S,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,P,J,L,S,L,S,S,S,S,S,S,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,P,J,J,S,S,S,S,S,S,S,G,G,_,_,_],
+    [_,_,_,_,_,_,_,_,_,P,J,J,_,S,O,O,O,O,S,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,P,R,P,_,S,S,S,S,S,S,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,R,_,S,S,S,_,S,S,_,S,S,_,_,_],
     [_,_,_,_,_,_,_,_,_,S,S,S,_,_,_,S,S,_,S,S,_,_,_,_],
     [_,_,_,_,_,_,_,S,S,S,_,_,_,_,_,S,S,_,S,S,_,_,_,_],
     [_,_,_,_,_,S,S,S,_,_,_,_,_,_,O,O,S,_,S,O,O,_,_,_],
@@ -309,16 +312,75 @@ trexEl.style.backgroundImage = `url(${trexRight})`;
 trexEl.style.backgroundSize = 'contain';
 trexEl.style.backgroundRepeat = 'no-repeat';
 
-// ---- CURSOR FOLLOWING ----
+// ---- CURSOR FOLLOWING WITH JETPACK FLAMES ----
 let mouseX = window.innerWidth / 2;
 let mouseY = window.innerHeight / 2;
 let trexX = mouseX;
 let trexY = mouseY;
 let lastDir = 'right';
 
+// Jetpack flame particle system
+const flameCanvas = document.createElement('canvas');
+flameCanvas.id = 'flame-canvas';
+flameCanvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9998;pointer-events:none;';
+document.body.appendChild(flameCanvas);
+const flameCtx = flameCanvas.getContext('2d');
+flameCtx.imageSmoothingEnabled = false;
+
+function resizeFlameCanvas() {
+  flameCanvas.width = window.innerWidth;
+  flameCanvas.height = window.innerHeight;
+}
+resizeFlameCanvas();
+window.addEventListener('resize', resizeFlameCanvas);
+
+const flameParticles = [];
+const FLAME_COLORS = ['#ff4422', '#ff6b2b', '#ffcc00', '#ff8844', '#ff2200'];
+
+function spawnFlame(x, y) {
+  const count = 2 + Math.floor(Math.random() * 2);
+  for (let i = 0; i < count; i++) {
+    flameParticles.push({
+      x: x + (Math.random() - 0.5) * 8,
+      y: y + Math.random() * 4,
+      vx: (Math.random() - 0.5) * 1.5,
+      vy: 1.5 + Math.random() * 2.5,
+      size: 3 + Math.floor(Math.random() * 4),
+      life: 1,
+      decay: 0.03 + Math.random() * 0.04,
+      color: FLAME_COLORS[Math.floor(Math.random() * FLAME_COLORS.length)],
+    });
+  }
+}
+
+function updateFlames() {
+  flameCtx.clearRect(0, 0, flameCanvas.width, flameCanvas.height);
+  for (let i = flameParticles.length - 1; i >= 0; i--) {
+    const p = flameParticles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life -= p.decay;
+    p.size = Math.max(1, p.size - 0.1);
+
+    if (p.life <= 0) {
+      flameParticles.splice(i, 1);
+      continue;
+    }
+
+    flameCtx.globalAlpha = p.life;
+    flameCtx.fillStyle = p.color;
+    // draw as pixel blocks for pixel art style
+    const s = Math.floor(p.size);
+    flameCtx.fillRect(Math.floor(p.x), Math.floor(p.y), s, s);
+  }
+  flameCtx.globalAlpha = 1;
+}
+
 function updateTrex() {
   const dx = mouseX - trexX;
   const dy = mouseY - trexY;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
   // smooth follow with slight lag
   trexX += dx * 0.08;
   trexY += dy * 0.08;
@@ -333,11 +395,21 @@ function updateTrex() {
   }
 
   // small bounce animation
-  const dist = Math.sqrt(dx * dx + dy * dy);
   const bounce = dist > 5 ? Math.sin(Date.now() / 80) * 3 : 0;
 
   trexEl.style.left = (trexX - 48) + 'px';
   trexEl.style.top = (trexY - 44 + bounce) + 'px';
+
+  // spawn jetpack flames when moving
+  if (dist > 3) {
+    // nozzle position: below the jetpack on the back
+    const nozzleOffsetX = lastDir === 'right' ? -20 : 20;
+    const nozzleOffsetY = 30;
+    spawnFlame(trexX + nozzleOffsetX, trexY + nozzleOffsetY + bounce);
+  }
+
+  // always update flame rendering
+  updateFlames();
 
   requestAnimationFrame(updateTrex);
 }
