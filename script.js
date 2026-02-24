@@ -7,6 +7,10 @@ const starCanvas = document.getElementById('stars-bg');
 const starCtx = starCanvas.getContext('2d');
 let stars = [];
 
+// Jetpack flame particles (declared early so drawStars can access them)
+const flameParticles = [];
+const FLAME_COLORS = ['#ff4422', '#ff6b2b', '#ffcc00', '#ff8844', '#ff2200'];
+
 function resizeStarCanvas() {
   starCanvas.width = window.innerWidth;
   starCanvas.height = window.innerHeight;
@@ -322,10 +326,6 @@ let mouseY = window.innerHeight / 2;
 let trexX = mouseX;
 let trexY = mouseY;
 let lastDir = 'right';
-
-// Jetpack flame particles (drawn on star canvas)
-const flameParticles = [];
-const FLAME_COLORS = ['#ff4422', '#ff6b2b', '#ffcc00', '#ff8844', '#ff2200'];
 
 function spawnFlame(x, y) {
   const count = 2 + Math.floor(Math.random() * 2);
