@@ -2,15 +2,24 @@
 // ASTRONAUTSCIENCE.COM - Interactive Pixel Art Landing Page
 // ============================================================
 
-// ---- STAR BACKGROUND ----
+// ---- GLOBALS ----
 const starCanvas = document.getElementById('stars-bg');
 const starCtx = starCanvas.getContext('2d');
+const trexEl = document.getElementById('trex-follower');
+const boxContainer = document.getElementById('floating-boxes-container');
 let stars = [];
-
-// Jetpack flame particles (declared early so drawStars can access them)
 const flameParticles = [];
 const FLAME_COLORS = ['#ff4422', '#ff6b2b', '#ffcc00', '#ff8844', '#ff2200'];
+const planets = [];
+let mouseX = window.innerWidth / 2;
+let mouseY = window.innerHeight / 2;
+let trexX = mouseX;
+let trexY = mouseY;
+let lastDir = 'right';
+let trexRight = null;
+let trexLeft = null;
 
+// ---- STAR FUNCTIONS ----
 function resizeStarCanvas() {
   starCanvas.width = window.innerWidth;
   starCanvas.height = window.innerHeight;
@@ -35,16 +44,16 @@ function initStars() {
 function drawStars() {
   starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
 
-  // draw planets behind stars (far away feel)
+  // planets behind stars
   updatePlanets();
   planets.forEach(p => drawPlanet(starCtx, p));
 
+  // stars
   stars.forEach(s => {
     s.twinkle += s.twinkleSpeed;
     const brightness = 0.4 + 0.6 * Math.abs(Math.sin(s.twinkle));
     starCtx.fillStyle = `rgba(200, 200, 255, ${brightness})`;
     starCtx.fillRect(Math.floor(s.x), Math.floor(s.y), s.size, s.size);
-    // slow drift
     s.y += s.speed * 0.15;
     if (s.y > starCanvas.height) {
       s.y = 0;
@@ -52,106 +61,104 @@ function drawStars() {
     }
   });
 
-  // draw jetpack flames on top of stars
+  // jetpack flames on top
   drawFlames(starCtx);
 
   requestAnimationFrame(drawStars);
 }
 
-// ---- PIXEL ART PLANETS ----
-const _ = null;
+// ---- PIXEL ART PLANET SPRITES ----
+const PN = null; // transparent for planet sprites
 
-// Hand-crafted pixel art sprite data for each planet
 const saturnSprite = [
-  [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
-  [_,_,_,_,_,_,_,_,_,_,1,1,1,1,1,_,_,_,_,_,_,_,_,_,_],
-  [_,_,_,_,_,_,_,_,1,1,2,2,2,2,2,1,1,_,_,_,_,_,_,_,_],
-  [_,_,_,_,_,_,_,1,2,3,3,2,2,2,2,2,2,1,_,_,_,_,_,_,_],
-  [_,_,_,_,_,_,1,2,3,3,2,2,4,4,2,2,2,2,1,_,_,_,_,_,_],
-  [_,_,_,_,_,_,1,2,3,2,2,4,4,4,4,2,2,2,1,_,_,_,_,_,_],
-  [_,_,_,_,_,1,2,2,2,2,2,2,2,2,2,2,2,2,2,1,_,_,_,_,_],
-  [_,_,_,_,_,1,2,4,4,4,4,4,4,4,4,4,4,2,2,1,_,_,_,_,_],
-  [_,_,5,5,5,1,2,2,2,2,2,2,2,2,2,2,2,2,2,1,5,5,5,_,_],
-  [_,5,5,6,6,1,2,4,4,4,4,4,4,4,4,4,4,2,2,1,6,6,5,5,_],
-  [5,5,6,6,_,1,2,2,2,2,2,2,2,2,2,2,2,5,5,1,_,6,6,5,5],
-  [_,_,_,_,_,_,1,2,2,2,4,4,4,4,2,5,5,1,_,_,_,_,_,_,_],
-  [_,_,_,_,_,_,1,2,2,2,2,2,2,5,5,2,2,1,_,_,_,_,_,_,_],
-  [_,_,_,_,_,_,_,1,2,2,2,2,5,5,2,2,1,_,_,_,_,_,_,_,_],
-  [_,_,_,_,_,_,_,_,1,1,5,5,2,2,1,1,_,_,_,_,_,_,_,_,_],
-  [_,_,_,_,_,_,_,_,_,_,1,1,1,1,1,_,_,_,_,_,_,_,_,_,_],
+  [PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,1,1,1,1,1,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,PN,PN,PN,1,1,2,2,2,2,2,1,1,PN,PN,PN,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,PN,PN,1,2,3,3,2,2,2,2,2,2,1,PN,PN,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,PN,1,2,3,3,2,2,4,4,2,2,2,2,1,PN,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,PN,1,2,3,2,2,4,4,4,4,2,2,2,1,PN,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,1,2,2,2,2,2,2,2,2,2,2,2,2,2,1,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,1,2,4,4,4,4,4,4,4,4,4,4,2,2,1,PN,PN,PN,PN,PN],
+  [PN,PN,5,5,5,1,2,2,2,2,2,2,2,2,2,2,2,2,2,1,5,5,5,PN,PN],
+  [PN,5,5,6,6,1,2,4,4,4,4,4,4,4,4,4,4,2,2,1,6,6,5,5,PN],
+  [5,5,6,6,PN,1,2,2,2,2,2,2,2,2,2,2,2,5,5,1,PN,6,6,5,5],
+  [PN,PN,PN,PN,PN,PN,1,2,2,2,4,4,4,4,2,5,5,1,PN,PN,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,PN,1,2,2,2,2,2,2,5,5,2,2,1,PN,PN,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,PN,PN,1,2,2,2,2,5,5,2,2,1,PN,PN,PN,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,PN,PN,PN,1,1,5,5,2,2,1,1,PN,PN,PN,PN,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,1,1,1,1,1,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN],
 ];
 const saturnPalette = {1:'#8a6a20',2:'#e8a84c',3:'#ffe0a0',4:'#c47a2a',5:'#d4b896',6:'#a89070'};
 
 const neptuneSprite = [
-  [_,_,_,_,_,1,1,1,_,_,_,_,_],
-  [_,_,_,1,1,2,2,2,1,1,_,_,_],
-  [_,_,1,3,3,2,2,2,2,2,1,_,_],
-  [_,1,3,3,2,2,4,4,2,2,2,1,_],
-  [_,1,2,2,2,4,4,4,4,2,2,1,_],
-  [_,1,2,2,2,2,2,2,2,2,2,1,_],
-  [_,1,2,4,4,4,4,4,4,4,2,1,_],
-  [_,1,2,2,2,2,2,2,2,2,2,1,_],
-  [_,_,1,2,2,4,4,4,2,2,1,_,_],
-  [_,_,_,1,1,2,2,2,1,1,_,_,_],
-  [_,_,_,_,_,1,1,1,_,_,_,_,_],
+  [PN,PN,PN,PN,PN,1,1,1,PN,PN,PN,PN,PN],
+  [PN,PN,PN,1,1,2,2,2,1,1,PN,PN,PN],
+  [PN,PN,1,3,3,2,2,2,2,2,1,PN,PN],
+  [PN,1,3,3,2,2,4,4,2,2,2,1,PN],
+  [PN,1,2,2,2,4,4,4,4,2,2,1,PN],
+  [PN,1,2,2,2,2,2,2,2,2,2,1,PN],
+  [PN,1,2,4,4,4,4,4,4,4,2,1,PN],
+  [PN,1,2,2,2,2,2,2,2,2,2,1,PN],
+  [PN,PN,1,2,2,4,4,4,2,2,1,PN,PN],
+  [PN,PN,PN,1,1,2,2,2,1,1,PN,PN,PN],
+  [PN,PN,PN,PN,PN,1,1,1,PN,PN,PN,PN,PN],
 ];
 const neptunePalette = {1:'#1a3a7a',2:'#4a8ee6',3:'#8ac4ff',4:'#2a5eaa'};
 
 const marsSprite = [
-  [_,_,_,1,1,1,_,_,_],
-  [_,1,1,2,2,2,1,1,_],
+  [PN,PN,PN,1,1,1,PN,PN,PN],
+  [PN,1,1,2,2,2,1,1,PN],
   [1,3,3,2,2,4,2,2,1],
   [1,3,2,2,4,4,4,2,1],
   [1,2,2,4,2,2,2,2,1],
   [1,2,2,2,2,4,2,2,1],
-  [_,1,2,2,2,2,2,1,_],
-  [_,_,1,1,2,1,1,_,_],
-  [_,_,_,_,1,_,_,_,_],
+  [PN,1,2,2,2,2,2,1,PN],
+  [PN,PN,1,1,2,1,1,PN,PN],
+  [PN,PN,PN,PN,1,PN,PN,PN,PN],
 ];
 const marsPalette = {1:'#6a1a0a',2:'#d45a3a',3:'#ff9070',4:'#a83a1a'};
 
 const purpleSprite = [
-  [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
-  [_,_,_,_,_,_,_,_,_,1,1,1,1,1,_,_,_,_,_,_,_,_,_],
-  [_,_,_,_,_,_,_,1,1,2,2,2,2,2,1,1,_,_,_,_,_,_,_],
-  [_,_,_,_,_,_,1,3,3,2,2,2,2,2,2,2,1,_,_,_,_,_,_],
-  [_,_,_,_,_,1,3,3,2,2,4,4,2,2,2,2,2,1,_,_,_,_,_],
-  [_,_,_,_,_,1,2,2,2,4,4,4,4,2,2,2,2,1,_,_,_,_,_],
-  [_,_,_,_,_,1,2,2,2,2,2,2,2,2,2,2,2,1,_,_,_,_,_],
-  [_,_,5,5,5,1,2,4,4,4,4,4,4,4,4,2,2,1,5,5,5,_,_],
-  [_,5,6,6,_,1,2,2,2,2,2,2,2,2,2,2,2,1,_,6,6,5,_],
-  [5,6,_,_,_,_,1,2,2,4,4,4,2,2,2,5,1,_,_,_,_,6,5],
-  [_,_,_,_,_,_,_,1,2,2,2,2,2,5,5,1,_,_,_,_,_,_,_],
-  [_,_,_,_,_,_,_,_,1,1,5,5,1,1,_,_,_,_,_,_,_,_,_],
-  [_,_,_,_,_,_,_,_,_,_,1,1,_,_,_,_,_,_,_,_,_,_,_],
+  [PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,PN,PN,PN,PN,1,1,1,1,1,PN,PN,PN,PN,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,PN,PN,1,1,2,2,2,2,2,1,1,PN,PN,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,PN,1,3,3,2,2,2,2,2,2,2,1,PN,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,1,3,3,2,2,4,4,2,2,2,2,2,1,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,1,2,2,2,4,4,4,4,2,2,2,2,1,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,1,2,2,2,2,2,2,2,2,2,2,2,1,PN,PN,PN,PN,PN],
+  [PN,PN,5,5,5,1,2,4,4,4,4,4,4,4,4,2,2,1,5,5,5,PN,PN],
+  [PN,5,6,6,PN,1,2,2,2,2,2,2,2,2,2,2,2,1,PN,6,6,5,PN],
+  [5,6,PN,PN,PN,PN,1,2,2,4,4,4,2,2,2,5,1,PN,PN,PN,PN,6,5],
+  [PN,PN,PN,PN,PN,PN,PN,1,2,2,2,2,2,5,5,1,PN,PN,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,PN,PN,PN,1,1,5,5,1,1,PN,PN,PN,PN,PN,PN,PN,PN,PN],
+  [PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,1,1,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN,PN],
 ];
 const purplePalette = {1:'#3a1a6e',2:'#9b68ee',3:'#c8a8ff',4:'#6b38be',5:'#c8a0e8',6:'#8a60c0'};
 
 const moonSprite = [
-  [_,_,1,1,1,_,_],
-  [_,1,2,2,2,1,_],
+  [PN,PN,1,1,1,PN,PN],
+  [PN,1,2,2,2,1,PN],
   [1,3,2,4,2,2,1],
   [1,2,2,2,2,4,1],
   [1,2,4,2,2,2,1],
-  [_,1,2,2,2,1,_],
-  [_,_,1,1,1,_,_],
+  [PN,1,2,2,2,1,PN],
+  [PN,PN,1,1,1,PN,PN],
 ];
 const moonPalette = {1:'#145a24',2:'#4ade80',3:'#8affb0',4:'#22863a'};
 
 const pinkSprite = [
-  [_,_,_,1,1,1,_,_,_],
-  [_,1,1,2,2,2,1,1,_],
+  [PN,PN,PN,1,1,1,PN,PN,PN],
+  [PN,1,1,2,2,2,1,1,PN],
   [1,3,3,2,2,2,2,2,1],
   [1,3,2,2,4,4,2,2,1],
   [1,2,2,4,4,4,4,2,1],
   [1,2,2,2,2,2,2,2,1],
-  [_,1,2,4,4,2,2,1,_],
-  [_,_,1,1,2,1,1,_,_],
-  [_,_,_,_,1,_,_,_,_],
+  [PN,1,2,4,4,2,2,1,PN],
+  [PN,PN,1,1,2,1,1,PN,PN],
+  [PN,PN,PN,PN,1,PN,PN,PN,PN],
 ];
 const pinkPalette = {1:'#7a1a4a',2:'#e84a8a',3:'#ffa0c8',4:'#b82a6a'};
 
-// Pre-render each planet sprite to an offscreen canvas for performance
 function renderSpriteToCanvas(sprite, palette, scale) {
   const rows = sprite.length;
   const cols = sprite[0].length;
@@ -172,19 +179,17 @@ function renderSpriteToCanvas(sprite, palette, scale) {
 }
 
 const planetSprites = [
-  { canvas: renderSpriteToCanvas(saturnSprite, saturnPalette, 5), scale: 5 },
-  { canvas: renderSpriteToCanvas(neptuneSprite, neptunePalette, 6), scale: 6 },
-  { canvas: renderSpriteToCanvas(marsSprite, marsPalette, 7), scale: 7 },
-  { canvas: renderSpriteToCanvas(purpleSprite, purplePalette, 5), scale: 5 },
-  { canvas: renderSpriteToCanvas(moonSprite, moonPalette, 8), scale: 8 },
-  { canvas: renderSpriteToCanvas(pinkSprite, pinkPalette, 7), scale: 7 },
+  { canvas: renderSpriteToCanvas(saturnSprite, saturnPalette, 5) },
+  { canvas: renderSpriteToCanvas(neptuneSprite, neptunePalette, 6) },
+  { canvas: renderSpriteToCanvas(marsSprite, marsPalette, 7) },
+  { canvas: renderSpriteToCanvas(purpleSprite, purplePalette, 5) },
+  { canvas: renderSpriteToCanvas(moonSprite, moonPalette, 8) },
+  { canvas: renderSpriteToCanvas(pinkSprite, pinkPalette, 7) },
 ];
-
-const planets = [];
 
 function createPlanets() {
   planets.length = 0;
-  planetSprites.forEach((ps, i) => {
+  planetSprites.forEach((ps) => {
     planets.push({
       spriteCanvas: ps.canvas,
       w: ps.canvas.width,
@@ -217,19 +222,7 @@ function updatePlanets() {
   });
 }
 
-createPlanets();
-
-window.addEventListener('resize', () => {
-  resizeStarCanvas();
-  createPlanets();
-});
-resizeStarCanvas();
-drawStars();
-
-
-// ---- PIXEL ART T-REX IN SPACE SUIT (drawn on offscreen canvas) ----
-const trexEl = document.getElementById('trex-follower');
-
+// ---- T-REX SPRITE WITH JETPACK ----
 const TREX_W = 24;
 const TREX_H = 22;
 const TREX_SCALE = 4;
@@ -242,22 +235,11 @@ function createTrexSprite() {
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = false;
 
-  // color palette
-  const G = '#4ade80'; // green skin
-  const D = '#22863a'; // dark green (nostril)
-  const W = '#ffffff'; // white (eye, teeth)
-  const K = '#111111'; // pupil
-  const S = '#b0b0c8'; // suit silver
-  const L = '#d0d0e8'; // suit highlight
-  const H = '#7b68ee'; // helmet frame purple
-  const V = '#2a2a6e'; // visor glass dark
-  const O = '#ff6b2b'; // orange accent
-  const J = '#555570'; // jetpack body
-  const P = '#3a3a50'; // jetpack dark
-  const R = '#ff4422'; // jetpack nozzle red
-  const _ = null;      // transparent
+  const G = '#4ade80', D = '#22863a', W = '#ffffff', K = '#111111';
+  const S = '#b0b0c8', L = '#d0d0e8', H = '#7b68ee', V = '#2a2a6e';
+  const O = '#ff6b2b', J = '#555570', P = '#3a3a50', R = '#ff4422';
+  const _ = null;
 
-  // 24x22 T-Rex astronaut facing RIGHT with jetpack on back
   const sprite = [
     [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,H,H,H,H,H,_,_,_,_],
     [_,_,_,_,_,_,_,_,_,_,_,_,_,H,H,V,V,V,V,V,H,_,_,_],
@@ -295,8 +277,8 @@ function createTrexSprite() {
   return canvas.toDataURL();
 }
 
-// Flipped version (facing left) - mirrors the sprite programmatically
 function createTrexSpriteFlipped() {
+  // Re-draw the sprite with each row reversed (no async image loading needed)
   const canvas = document.createElement('canvas');
   const s = TREX_SCALE;
   canvas.width = TREX_W * s;
@@ -304,29 +286,51 @@ function createTrexSpriteFlipped() {
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = false;
 
-  // draw the right-facing sprite onto a temp canvas, then flip
-  const img = new Image();
-  img.src = trexRight;
-  ctx.translate(canvas.width, 0);
-  ctx.scale(-1, 1);
-  ctx.drawImage(img, 0, 0);
+  const G = '#4ade80', D = '#22863a', W = '#ffffff', K = '#111111';
+  const S = '#b0b0c8', L = '#d0d0e8', H = '#7b68ee', V = '#2a2a6e';
+  const O = '#ff6b2b', J = '#555570', P = '#3a3a50', R = '#ff4422';
+  const _ = null;
+
+  const sprite = [
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,H,H,H,H,H,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,H,H,V,V,V,V,V,H,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,H,V,G,G,G,G,G,V,V,H,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,H,V,G,G,W,K,G,G,V,V,H,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,H,V,G,G,G,G,G,G,V,V,H,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,H,V,G,G,G,G,G,G,G,V,H,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,H,D,G,G,G,G,G,G,G,H,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,H,W,_,W,_,G,G,H,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,H,H,H,H,H,H,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,P,P,_,S,S,L,S,S,S,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,P,J,J,S,S,O,S,S,S,S,S,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,P,J,L,S,L,S,S,S,S,S,S,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,P,J,J,S,S,S,S,S,S,S,G,G,_,_,_],
+    [_,_,_,_,_,_,_,_,_,P,J,J,_,S,O,O,O,O,S,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,P,R,P,_,S,S,S,S,S,S,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,R,_,S,S,S,_,S,S,_,S,S,_,_,_],
+    [_,_,_,_,_,_,_,_,_,S,S,S,_,_,_,S,S,_,S,S,_,_,_,_],
+    [_,_,_,_,_,_,_,S,S,S,_,_,_,_,_,S,S,_,S,S,_,_,_,_],
+    [_,_,_,_,_,S,S,S,_,_,_,_,_,_,O,O,S,_,S,O,O,_,_,_],
+    [_,_,_,S,S,S,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,G,G,G,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,G,G,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+  ];
+
+  // Draw each row reversed to flip horizontally
+  sprite.forEach((row, y) => {
+    const flipped = [...row].reverse();
+    flipped.forEach((color, x) => {
+      if (color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(x * s, y * s, s, s);
+      }
+    });
+  });
 
   return canvas.toDataURL();
 }
 
-const trexRight = createTrexSprite();
-const trexLeft = createTrexSpriteFlipped();
-trexEl.style.backgroundImage = `url(${trexRight})`;
-trexEl.style.backgroundSize = 'contain';
-trexEl.style.backgroundRepeat = 'no-repeat';
-
-// ---- CURSOR FOLLOWING WITH JETPACK FLAMES ----
-let mouseX = window.innerWidth / 2;
-let mouseY = window.innerHeight / 2;
-let trexX = mouseX;
-let trexY = mouseY;
-let lastDir = 'right';
-
+// ---- JETPACK FLAME FUNCTIONS ----
 function spawnFlame(x, y) {
   const count = 2 + Math.floor(Math.random() * 2);
   for (let i = 0; i < count; i++) {
@@ -364,16 +368,15 @@ function drawFlames(ctx) {
   ctx.globalAlpha = 1;
 }
 
+// ---- CURSOR FOLLOWING ----
 function updateTrex() {
   const dx = mouseX - trexX;
   const dy = mouseY - trexY;
   const dist = Math.sqrt(dx * dx + dy * dy);
 
-  // smooth follow with slight lag
   trexX += dx * 0.08;
   trexY += dy * 0.08;
 
-  // flip based on direction
   if (dx > 2 && lastDir !== 'right') {
     trexEl.style.backgroundImage = `url(${trexRight})`;
     lastDir = 'right';
@@ -382,42 +385,21 @@ function updateTrex() {
     lastDir = 'left';
   }
 
-  // small bounce animation
   const bounce = dist > 5 ? Math.sin(Date.now() / 80) * 3 : 0;
 
   trexEl.style.left = (trexX - 48) + 'px';
   trexEl.style.top = (trexY - 44 + bounce) + 'px';
 
-  // spawn jetpack flames when moving
+  // jetpack flames when moving
   if (dist > 3) {
     const nozzleOffsetX = lastDir === 'right' ? -20 : 20;
-    const nozzleOffsetY = 30;
-    spawnFlame(trexX + nozzleOffsetX, trexY + nozzleOffsetY + bounce);
+    spawnFlame(trexX + nozzleOffsetX, trexY + 30 + bounce);
   }
 
   requestAnimationFrame(updateTrex);
 }
 
-document.addEventListener('mousemove', e => {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
-});
-
-document.addEventListener('touchmove', e => {
-  mouseX = e.touches[0].clientX;
-  mouseY = e.touches[0].clientY;
-});
-
-document.addEventListener('touchstart', e => {
-  mouseX = e.touches[0].clientX;
-  mouseY = e.touches[0].clientY;
-});
-
-updateTrex();
-
-
 // ---- MYSTERY BOXES ----
-const boxContainer = document.getElementById('floating-boxes-container');
 const BOX_COLORS = ['#ff6b2b', '#7b68ee', '#00ffaa', '#ff4488', '#ffcc00'];
 
 function createMysteryBoxSprite(color) {
@@ -428,11 +410,8 @@ function createMysteryBoxSprite(color) {
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = false;
 
-  const C = color;
-  const D = '#1a1a2e'; // dark outline
-  const Q = '?';
+  const D = '#1a1a2e';
 
-  // simple box with ? mark
   for (let y = 0; y < 10; y++) {
     for (let x = 0; x < 10; x++) {
       if (y === 0 || y === 9 || x === 0 || x === 9) {
@@ -448,19 +427,9 @@ function createMysteryBoxSprite(color) {
     }
   }
 
-  // draw ? mark in center
   ctx.fillStyle = '#fff';
-  // pixel art question mark
-  const qPixels = [
-    [3,3],[4,3],[5,3],[6,3],
-    [6,4],
-    [5,5],[4,5],
-    [4,6],
-    [4,8]
-  ];
-  qPixels.forEach(([px,py]) => {
-    ctx.fillRect(px * s, py * s, s, s);
-  });
+  const qPixels = [[3,3],[4,3],[5,3],[6,3],[6,4],[5,5],[4,5],[4,6],[4,8]];
+  qPixels.forEach(([px,py]) => { ctx.fillRect(px * s, py * s, s, s); });
 
   return canvas.toDataURL();
 }
@@ -483,13 +452,11 @@ function spawnMysteryBox() {
   box.addEventListener('click', (e) => {
     e.stopPropagation();
     explodeConfetti(e.clientX, e.clientY, color);
-    // pop animation
     box.style.transition = 'transform 0.15s, opacity 0.15s';
     box.style.transform = 'scale(1.5)';
     box.style.opacity = '0';
     setTimeout(() => {
       box.remove();
-      // respawn a new box after a delay
       setTimeout(spawnMysteryBox, 1000 + Math.random() * 3000);
     }, 200);
   });
@@ -497,13 +464,7 @@ function spawnMysteryBox() {
   boxContainer.appendChild(box);
 }
 
-// Spawn initial boxes
-for (let i = 0; i < 5; i++) {
-  setTimeout(() => spawnMysteryBox(), i * 600);
-}
-
-
-// ---- CONFETTI EXPLOSION ----
+// ---- CONFETTI ----
 function explodeConfetti(x, y, baseColor) {
   const colors = ['#ff6b2b', '#7b68ee', '#00ffaa', '#ff4488', '#ffcc00', '#fff', baseColor];
   const count = 25 + Math.floor(Math.random() * 15);
@@ -521,15 +482,12 @@ function explodeConfetti(x, y, baseColor) {
 
     document.body.appendChild(particle);
 
-    // physics
     const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5);
     const velocity = 3 + Math.random() * 6;
     let vx = Math.cos(angle) * velocity;
-    let vy = Math.sin(angle) * velocity - 3; // upward bias
-    let px = x;
-    let py = y;
-    let gravity = 0.15;
-    let opacity = 1;
+    let vy = Math.sin(angle) * velocity - 3;
+    let px = x, py = y;
+    let gravity = 0.15, opacity = 1;
     let rotation = Math.random() * 360;
     let rotSpeed = (Math.random() - 0.5) * 15;
 
@@ -540,34 +498,73 @@ function explodeConfetti(x, y, baseColor) {
       py += vy;
       opacity -= 0.015;
       rotation += rotSpeed;
-
       particle.style.left = px + 'px';
       particle.style.top = py + 'px';
       particle.style.opacity = opacity;
       particle.style.transform = `rotate(${rotation}deg)`;
-
-      if (opacity > 0) {
-        requestAnimationFrame(animateParticle);
-      } else {
-        particle.remove();
-      }
+      if (opacity > 0) { requestAnimationFrame(animateParticle); }
+      else { particle.remove(); }
     }
     requestAnimationFrame(animateParticle);
   }
 }
 
+// ---- PIXEL ART GAME ICONS ----
+function drawPixelIcon(canvasId, pixelData, palette) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  const s = 4;
+  pixelData.forEach((row, y) => {
+    row.forEach((colorIdx, x) => {
+      if (colorIdx !== 0 && palette[colorIdx]) {
+        ctx.fillStyle = palette[colorIdx];
+        ctx.fillRect(x * s, y * s, s, s);
+      }
+    });
+  });
+}
 
-// ---- CLICK ANYWHERE RIPPLE ----
+
+// ============================================================
+// INITIALIZATION - everything starts here
+// ============================================================
+
+// Create T-Rex sprites
+trexRight = createTrexSprite();
+trexLeft = createTrexSpriteFlipped();
+trexEl.style.backgroundImage = `url(${trexRight})`;
+trexEl.style.backgroundSize = 'contain';
+trexEl.style.backgroundRepeat = 'no-repeat';
+
+// Set up planets and stars
+createPlanets();
+resizeStarCanvas();
+
+// Start animation loops
+drawStars();
+updateTrex();
+
+// Resize handler
+window.addEventListener('resize', () => {
+  resizeStarCanvas();
+  createPlanets();
+});
+
+// Input handlers
+document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
+document.addEventListener('touchmove', e => { mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY; });
+document.addEventListener('touchstart', e => { mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY; });
+
+// Click effects
 document.addEventListener('click', (e) => {
   const ripple = document.createElement('div');
   ripple.className = 'click-ripple';
   ripple.style.left = (e.clientX - 40) + 'px';
   ripple.style.top = (e.clientY - 40) + 'px';
   document.body.appendChild(ripple);
-
-  // small confetti burst on any click
   explodeConfetti(e.clientX, e.clientY, '#7b68ee');
-
   setTimeout(() => ripple.remove(), 600);
 });
 
@@ -581,8 +578,6 @@ document.addEventListener('touchstart', (e) => {
   setTimeout(() => ripple.remove(), 600);
 });
 
-
-// ---- GAME CARD CLICK ----
 document.querySelectorAll('.game-card').forEach(card => {
   card.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -590,29 +585,12 @@ document.querySelectorAll('.game-card').forEach(card => {
   });
 });
 
-
-// ---- PIXEL ART GAME ICONS ----
-function drawPixelIcon(canvasId, pixelData, palette, bgColor) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
-  const s = 4; // each pixel = 4x4
-  if (bgColor) {
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
-  pixelData.forEach((row, y) => {
-    row.forEach((colorIdx, x) => {
-      if (colorIdx !== 0 && palette[colorIdx]) {
-        ctx.fillStyle = palette[colorIdx];
-        ctx.fillRect(x * s, y * s, s, s);
-      }
-    });
-  });
+// Spawn mystery boxes
+for (let i = 0; i < 5; i++) {
+  setTimeout(() => spawnMysteryBox(), i * 600);
 }
 
-// FossilCraft icon: blocky T-Rex
+// Draw game icons
 drawPixelIcon('icon-fossilcraft', [
   [0,0,0,0,0,0,0,0,0,0,0,0],
   [0,0,0,0,0,1,1,1,1,1,0,0],
@@ -626,14 +604,8 @@ drawPixelIcon('icon-fossilcraft', [
   [0,1,1,0,1,1,0,1,1,0,0,0],
   [0,1,0,0,1,0,0,0,1,0,0,0],
   [0,0,0,0,0,0,0,0,0,0,0,0],
-], {
-  1: '#4ade80', // green body
-  2: '#ffffff', // eye
-  3: '#ffffff', // teeth
-  4: '#22863a', // arm
-});
+], {1:'#4ade80',2:'#ffffff',3:'#ffffff',4:'#22863a'});
 
-// Banana Kingdom icon: banana with crown
 drawPixelIcon('icon-banana', [
   [0,0,0,0,1,1,1,0,0,0,0,0],
   [0,0,0,1,3,3,3,1,0,0,0,0],
@@ -647,15 +619,8 @@ drawPixelIcon('icon-banana', [
   [0,0,0,2,2,2,0,0,0,0,0,0],
   [0,0,0,0,5,5,0,0,0,0,0,0],
   [0,0,0,0,0,0,0,0,0,0,0,0],
-], {
-  1: '#ffcc00', // crown gold
-  2: '#ffcc00', // banana yellow
-  3: '#ff4444', // crown jewels
-  4: '#c8a200', // banana shadow
-  5: '#8b6914', // stem
-});
+], {1:'#ffcc00',2:'#ffcc00',3:'#ff4444',4:'#c8a200',5:'#8b6914'});
 
-// Dino Explorer icon: blocky compass / explorer binoculars with dino
 drawPixelIcon('icon-dinoexplorer', [
   [0,0,0,0,0,0,0,0,0,0,0,0],
   [0,0,0,0,1,1,1,1,0,0,0,0],
@@ -669,10 +634,4 @@ drawPixelIcon('icon-dinoexplorer', [
   [0,0,0,0,5,5,5,5,0,0,0,0],
   [0,0,0,5,0,5,5,0,5,0,0,0],
   [0,0,0,0,0,0,0,0,0,0,0,0],
-], {
-  1: '#7b68ee', // compass rim purple
-  2: '#1a1a4e', // compass face dark
-  3: '#ff6b2b', // N/S markers
-  4: '#00ffaa', // needle green
-  5: '#4ade80', // dino body below
-});
+], {1:'#7b68ee',2:'#1a1a4e',3:'#ff6b2b',4:'#00ffaa',5:'#4ade80'});
