@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AstronautScience</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="stars-bg"></canvas>
+
+  <div id="trex-follower"></div>
+
+  <header>
+    <h1>ASTRONAUT<span class="accent">SCIENCE</span></h1>
+    <p class="tagline">TAP ANYWHERE &bull; EXPLORE &bull; PLAY GAMES</p>
+  </header>
+
+  <main>
+    <section class="games-section">
+      <h2>// OUR GAMES</h2>
+      <div class="games-grid">
+        <a href="../EL GAMMs/FossilCraft.io/index.html" target="_blank" class="game-card floating-box" data-delay="0">
+          <canvas class="game-icon-canvas" id="icon-fossilcraft" width="48" height="48"></canvas>
+          <h3>FOSSILCRAFT.IO</h3>
+          <p>BUILD YOUR OWN DINO PARK! MANAGE EXHIBITS, ATTRACT VISITORS, AND GROW A PREHISTORIC EMPIRE.</p>
+        </a>
+        <a href="../EL GAMMs/Banana Kingdom/index.html" target="_blank" class="game-card floating-box" data-delay="1">
+          <canvas class="game-icon-canvas" id="icon-banana" width="48" height="48"></canvas>
+          <h3>BANANA KINGDOM</h3>
+          <p>BUILD A FRUIT ARMY AND BATTLE THE TOMATO EMPIRE! HARVEST, FIGHT, AND RESCUE KING KEASER.</p>
+        </a>
+        <a href="../EL GAMMs/DinoLearningGameV2/index.html" target="_blank" class="game-card floating-box" data-delay="2">
+          <canvas class="game-icon-canvas" id="icon-dinoexplorer" width="48" height="48"></canvas>
+          <h3>DINO EXPLORER</h3>
+          <p>EXPLORE A 3D WORLD WITH 15 REALISTIC DINOSAURS. DISCOVER SPECIES, TAKE QUIZZES, AND EARN GEMS.</p>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <section class="about-section">
+    <h2>// ABOUT</h2>
+    <p class="about-text">
+      ASTRONAUTSCIENCE IS AN INDIE GAME STUDIO BASED IN MINEOLA, NY.
+      WE MAKE FUN, CREATIVE GAMES WITH A LOVE FOR DINOSAURS, PIXEL ART, AND BIG IDEAS.
+    </p>
+  </section>
+
+  <footer>
+    <p>&copy; 2026 ASTRONAUTSCIENCE.COM &bull; MINEOLA, NY</p>
+  </footer>
+
+  <!-- Floating mystery boxes that spawn randomly -->
+  <div id="floating-boxes-container"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+/* ========== RESET & BASE ========== */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-family: 'Press Start 2P', monospace;
+  background: #0a0a2e;
+  color: #e0e0ff;
+  cursor: crosshair;
+  image-rendering: pixelated;
+}
+
+/* ========== STAR BACKGROUND CANVAS ========== */
+#stars-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ========== T-REX CURSOR FOLLOWER ========== */
+#trex-follower {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  width: 96px;
+  height: 88px;
+  image-rendering: pixelated;
+  transition: transform 0.05s linear;
+}
+
+/* ========== HEADER ========== */
+header {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 80px 20px 40px;
+}
+
+header h1 {
+  font-size: clamp(1.2rem, 5vw, 3rem);
+  letter-spacing: 4px;
+  color: #fff;
+  text-shadow:
+    0 0 10px #7b68ee,
+    0 0 30px #7b68ee,
+    4px 4px 0 #1a1a4e;
+}
+
+header h1 .accent {
+  color: #00ffaa;
+  text-shadow:
+    0 0 10px #00ffaa,
+    0 0 30px #00ffaa,
+    4px 4px 0 #0a3a2a;
+}
+
+.tagline {
+  margin-top: 20px;
+  font-size: clamp(0.45rem, 1.5vw, 0.7rem);
+  color: #7b68ee;
+  letter-spacing: 3px;
+  animation: blink-tag 2s infinite;
+}
+
+@keyframes blink-tag {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ========== GAMES SECTION ========== */
+.games-section {
+  position: relative;
+  z-index: 10;
+  max-width: 900px;
+  margin: 60px auto;
+  padding: 0 20px;
+}
+
+.games-section h2 {
+  font-size: clamp(0.6rem, 2vw, 1rem);
+  color: #00ffaa;
+  margin-bottom: 30px;
+  text-shadow: 2px 2px 0 #0a3a2a;
+}
+
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.game-card {
+  background: #12124a;
+  border: 3px solid #7b68ee;
+  padding: 30px 20px;
+  text-align: center;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 6px 6px 0 #050520;
+}
+
+.game-card::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  height: 3px;
+  background: rgba(255,255,255,0.15);
+}
+
+.game-card:hover {
+  transform: translate(-2px, -2px);
+  border-color: #00ffaa;
+  box-shadow: 8px 8px 0 #050520, 0 0 20px rgba(0, 255, 170, 0.3);
+}
+
+.game-card {
+  text-decoration: none;
+  display: block;
+  color: inherit;
+}
+
+.game-icon-canvas {
+  image-rendering: pixelated;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 15px;
+}
+
+.game-card h3 {
+  font-size: 0.65rem;
+  margin-bottom: 12px;
+  color: #00ffaa;
+}
+
+.game-card p {
+  font-size: 0.42rem;
+  color: #b0b0d8;
+  line-height: 1.8;
+}
+
+/* ========== ABOUT SECTION ========== */
+.about-section {
+  position: relative;
+  z-index: 10;
+  max-width: 700px;
+  margin: 80px auto 20px;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.about-section h2 {
+  font-size: clamp(0.6rem, 2vw, 1rem);
+  color: #00ffaa;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 0 #0a3a2a;
+}
+
+.about-text {
+  font-size: clamp(0.4rem, 1.2vw, 0.55rem);
+  color: #9090c0;
+  line-height: 2.2;
+}
+
+/* ========== FLOATING MYSTERY BOXES ========== */
+.mystery-box {
+  position: fixed;
+  z-index: 50;
+  cursor: pointer;
+  animation: float-box 4s ease-in-out infinite;
+  transition: transform 0.1s;
+  image-rendering: pixelated;
+}
+
+.mystery-box:hover {
+  transform: scale(1.15);
+}
+
+@keyframes float-box {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  25% { transform: translateY(-12px) rotate(2deg); }
+  75% { transform: translateY(8px) rotate(-2deg); }
+}
+
+/* ========== CONFETTI PARTICLE ========== */
+.confetti {
+  position: fixed;
+  z-index: 100;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
+/* ========== CLICK RIPPLE ========== */
+.click-ripple {
+  position: fixed;
+  z-index: 90;
+  pointer-events: none;
+  border: 3px solid #00ffaa;
+  border-radius: 0;
+  animation: ripple-expand 0.5s ease-out forwards;
+}
+
+@keyframes ripple-expand {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 1;
+  }
+  100% {
+    width: 80px;
+    height: 80px;
+    opacity: 0;
+  }
+}
+
+/* ========== FOOTER ========== */
+footer {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 60px 20px 30px;
+  font-size: 0.45rem;
+  color: #3a3a6e;
+}
+
+/* ========== FLOATING ANIMATION FOR GAME CARDS ========== */
+.floating-box {
+  animation: card-float 3s ease-in-out infinite;
+}
+.floating-box[data-delay="1"] { animation-delay: 1s; }
+.floating-box[data-delay="2"] { animation-delay: 2s; }
+
+@keyframes card-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.floating-box:hover {
+  animation: none;
+  transform: translate(-2px, -2px);
+}
