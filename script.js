@@ -50,138 +50,150 @@ function drawStars() {
   requestAnimationFrame(drawStars);
 }
 
-// ---- PLANETS ----
+// ---- PIXEL ART PLANETS ----
+const _ = null;
+
+// Hand-crafted pixel art sprite data for each planet
+const saturnSprite = [
+  [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+  [_,_,_,_,_,_,_,_,_,_,1,1,1,1,1,_,_,_,_,_,_,_,_,_,_],
+  [_,_,_,_,_,_,_,_,1,1,2,2,2,2,2,1,1,_,_,_,_,_,_,_,_],
+  [_,_,_,_,_,_,_,1,2,3,3,2,2,2,2,2,2,1,_,_,_,_,_,_,_],
+  [_,_,_,_,_,_,1,2,3,3,2,2,4,4,2,2,2,2,1,_,_,_,_,_,_],
+  [_,_,_,_,_,_,1,2,3,2,2,4,4,4,4,2,2,2,1,_,_,_,_,_,_],
+  [_,_,_,_,_,1,2,2,2,2,2,2,2,2,2,2,2,2,2,1,_,_,_,_,_],
+  [_,_,_,_,_,1,2,4,4,4,4,4,4,4,4,4,4,2,2,1,_,_,_,_,_],
+  [_,_,5,5,5,1,2,2,2,2,2,2,2,2,2,2,2,2,2,1,5,5,5,_,_],
+  [_,5,5,6,6,1,2,4,4,4,4,4,4,4,4,4,4,2,2,1,6,6,5,5,_],
+  [5,5,6,6,_,1,2,2,2,2,2,2,2,2,2,2,2,5,5,1,_,6,6,5,5],
+  [_,_,_,_,_,_,1,2,2,2,4,4,4,4,2,5,5,1,_,_,_,_,_,_,_],
+  [_,_,_,_,_,_,1,2,2,2,2,2,2,5,5,2,2,1,_,_,_,_,_,_,_],
+  [_,_,_,_,_,_,_,1,2,2,2,2,5,5,2,2,1,_,_,_,_,_,_,_,_],
+  [_,_,_,_,_,_,_,_,1,1,5,5,2,2,1,1,_,_,_,_,_,_,_,_,_],
+  [_,_,_,_,_,_,_,_,_,_,1,1,1,1,1,_,_,_,_,_,_,_,_,_,_],
+];
+const saturnPalette = {1:'#8a6a20',2:'#e8a84c',3:'#ffe0a0',4:'#c47a2a',5:'#d4b896',6:'#a89070'};
+
+const neptuneSprite = [
+  [_,_,_,_,_,1,1,1,_,_,_,_,_],
+  [_,_,_,1,1,2,2,2,1,1,_,_,_],
+  [_,_,1,3,3,2,2,2,2,2,1,_,_],
+  [_,1,3,3,2,2,4,4,2,2,2,1,_],
+  [_,1,2,2,2,4,4,4,4,2,2,1,_],
+  [_,1,2,2,2,2,2,2,2,2,2,1,_],
+  [_,1,2,4,4,4,4,4,4,4,2,1,_],
+  [_,1,2,2,2,2,2,2,2,2,2,1,_],
+  [_,_,1,2,2,4,4,4,2,2,1,_,_],
+  [_,_,_,1,1,2,2,2,1,1,_,_,_],
+  [_,_,_,_,_,1,1,1,_,_,_,_,_],
+];
+const neptunePalette = {1:'#1a3a7a',2:'#4a8ee6',3:'#8ac4ff',4:'#2a5eaa'};
+
+const marsSprite = [
+  [_,_,_,1,1,1,_,_,_],
+  [_,1,1,2,2,2,1,1,_],
+  [1,3,3,2,2,4,2,2,1],
+  [1,3,2,2,4,4,4,2,1],
+  [1,2,2,4,2,2,2,2,1],
+  [1,2,2,2,2,4,2,2,1],
+  [_,1,2,2,2,2,2,1,_],
+  [_,_,1,1,2,1,1,_,_],
+  [_,_,_,_,1,_,_,_,_],
+];
+const marsPalette = {1:'#6a1a0a',2:'#d45a3a',3:'#ff9070',4:'#a83a1a'};
+
+const purpleSprite = [
+  [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+  [_,_,_,_,_,_,_,_,_,1,1,1,1,1,_,_,_,_,_,_,_,_,_],
+  [_,_,_,_,_,_,_,1,1,2,2,2,2,2,1,1,_,_,_,_,_,_,_],
+  [_,_,_,_,_,_,1,3,3,2,2,2,2,2,2,2,1,_,_,_,_,_,_],
+  [_,_,_,_,_,1,3,3,2,2,4,4,2,2,2,2,2,1,_,_,_,_,_],
+  [_,_,_,_,_,1,2,2,2,4,4,4,4,2,2,2,2,1,_,_,_,_,_],
+  [_,_,_,_,_,1,2,2,2,2,2,2,2,2,2,2,2,1,_,_,_,_,_],
+  [_,_,5,5,5,1,2,4,4,4,4,4,4,4,4,2,2,1,5,5,5,_,_],
+  [_,5,6,6,_,1,2,2,2,2,2,2,2,2,2,2,2,1,_,6,6,5,_],
+  [5,6,_,_,_,_,1,2,2,4,4,4,2,2,2,5,1,_,_,_,_,6,5],
+  [_,_,_,_,_,_,_,1,2,2,2,2,2,5,5,1,_,_,_,_,_,_,_],
+  [_,_,_,_,_,_,_,_,1,1,5,5,1,1,_,_,_,_,_,_,_,_,_],
+  [_,_,_,_,_,_,_,_,_,_,1,1,_,_,_,_,_,_,_,_,_,_,_],
+];
+const purplePalette = {1:'#3a1a6e',2:'#9b68ee',3:'#c8a8ff',4:'#6b38be',5:'#c8a0e8',6:'#8a60c0'};
+
+const moonSprite = [
+  [_,_,1,1,1,_,_],
+  [_,1,2,2,2,1,_],
+  [1,3,2,4,2,2,1],
+  [1,2,2,2,2,4,1],
+  [1,2,4,2,2,2,1],
+  [_,1,2,2,2,1,_],
+  [_,_,1,1,1,_,_],
+];
+const moonPalette = {1:'#145a24',2:'#4ade80',3:'#8affb0',4:'#22863a'};
+
+const pinkSprite = [
+  [_,_,_,1,1,1,_,_,_],
+  [_,1,1,2,2,2,1,1,_],
+  [1,3,3,2,2,2,2,2,1],
+  [1,3,2,2,4,4,2,2,1],
+  [1,2,2,4,4,4,4,2,1],
+  [1,2,2,2,2,2,2,2,1],
+  [_,1,2,4,4,2,2,1,_],
+  [_,_,1,1,2,1,1,_,_],
+  [_,_,_,_,1,_,_,_,_],
+];
+const pinkPalette = {1:'#7a1a4a',2:'#e84a8a',3:'#ffa0c8',4:'#b82a6a'};
+
+// Pre-render each planet sprite to an offscreen canvas for performance
+function renderSpriteToCanvas(sprite, palette, scale) {
+  const rows = sprite.length;
+  const cols = sprite[0].length;
+  const canvas = document.createElement('canvas');
+  canvas.width = cols * scale;
+  canvas.height = rows * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  sprite.forEach((row, y) => {
+    row.forEach((c, x) => {
+      if (c !== null && palette[c]) {
+        ctx.fillStyle = palette[c];
+        ctx.fillRect(x * scale, y * scale, scale, scale);
+      }
+    });
+  });
+  return canvas;
+}
+
+const planetSprites = [
+  { canvas: renderSpriteToCanvas(saturnSprite, saturnPalette, 5), scale: 5 },
+  { canvas: renderSpriteToCanvas(neptuneSprite, neptunePalette, 6), scale: 6 },
+  { canvas: renderSpriteToCanvas(marsSprite, marsPalette, 7), scale: 7 },
+  { canvas: renderSpriteToCanvas(purpleSprite, purplePalette, 5), scale: 5 },
+  { canvas: renderSpriteToCanvas(moonSprite, moonPalette, 8), scale: 8 },
+  { canvas: renderSpriteToCanvas(pinkSprite, pinkPalette, 7), scale: 7 },
+];
+
 const planets = [];
 
 function createPlanets() {
   planets.length = 0;
-  const planetDefs = [
-    { // big ringed gas giant (Saturn-like)
-      radius: 28,
-      color: '#e8a84c',
-      color2: '#c47a2a',
-      stripe: '#d4943a',
-      ring: true,
-      ringColor: 'rgba(210,180,140,0.5)',
-      ringColor2: 'rgba(180,150,100,0.3)',
-    },
-    { // blue ice planet (Neptune-like)
-      radius: 20,
-      color: '#4a8ee6',
-      color2: '#2a5eaa',
-      stripe: '#5a9ef6',
-      ring: false,
-    },
-    { // small red planet (Mars-like)
-      radius: 14,
-      color: '#d45a3a',
-      color2: '#a83a1a',
-      stripe: '#c44a2a',
-      ring: false,
-    },
-    { // purple planet with ring
-      radius: 22,
-      color: '#9b68ee',
-      color2: '#6b38be',
-      stripe: '#8b58de',
-      ring: true,
-      ringColor: 'rgba(155,104,238,0.4)',
-      ringColor2: 'rgba(107,56,190,0.25)',
-    },
-    { // tiny green moon
-      radius: 9,
-      color: '#4ade80',
-      color2: '#22863a',
-      stripe: '#3ace70',
-      ring: false,
-    },
-    { // pink/magenta planet
-      radius: 16,
-      color: '#e84a8a',
-      color2: '#b82a6a',
-      stripe: '#d83a7a',
-      ring: false,
-    },
-  ];
-
-  planetDefs.forEach((def, i) => {
+  planetSprites.forEach((ps, i) => {
     planets.push({
-      ...def,
+      spriteCanvas: ps.canvas,
+      w: ps.canvas.width,
+      h: ps.canvas.height,
       x: Math.random() * starCanvas.width,
-      y: 80 + Math.random() * (starCanvas.height - 160),
-      speedX: (0.08 + Math.random() * 0.15) * (Math.random() < 0.5 ? 1 : -1),
-      speedY: (0.02 + Math.random() * 0.06) * (Math.random() < 0.5 ? 1 : -1),
+      y: 60 + Math.random() * (starCanvas.height - 120),
+      speedX: (0.15 + Math.random() * 0.25) * (Math.random() < 0.5 ? 1 : -1),
+      speedY: (0.04 + Math.random() * 0.08) * (Math.random() < 0.5 ? 1 : -1),
       wobble: Math.random() * Math.PI * 2,
-      wobbleSpeed: 0.003 + Math.random() * 0.005,
+      wobbleSpeed: 0.005 + Math.random() * 0.008,
     });
   });
 }
 
 function drawPlanet(ctx, p) {
-  const r = p.radius;
-  const x = Math.floor(p.x);
-  const y = Math.floor(p.y + Math.sin(p.wobble) * 8);
-
-  // draw ring behind planet (bottom half)
-  if (p.ring) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.ellipse(x, y + r * 0.1, r * 2.2, r * 0.5, 0, 0, Math.PI);
-    ctx.strokeStyle = p.ringColor;
-    ctx.lineWidth = 4;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.ellipse(x, y + r * 0.1, r * 1.8, r * 0.4, 0, 0, Math.PI);
-    ctx.strokeStyle = p.ringColor2;
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  // planet body with pixel-style rendering
-  for (let py = -r; py <= r; py++) {
-    for (let px = -r; px <= r; px++) {
-      const dist = Math.sqrt(px * px + py * py);
-      if (dist <= r) {
-        // shading: lighter on top-left, darker on bottom-right
-        const shade = (px + py) / (r * 2);
-        let color;
-        // horizontal stripes for gas giant effect
-        if (Math.abs(py) % 6 < 2) {
-          color = p.stripe;
-        } else if (shade < -0.2) {
-          color = p.color;
-        } else {
-          color = p.color2;
-        }
-        // edge darkening
-        const edgeFade = dist / r;
-        const alpha = edgeFade > 0.85 ? 1 - (edgeFade - 0.85) * 5 : 1;
-
-        ctx.globalAlpha = Math.max(0, alpha);
-        ctx.fillStyle = color;
-        // use 2x2 blocks for pixelated look
-        ctx.fillRect(x + px * 2, y + py * 2, 2, 2);
-      }
-    }
-  }
-  ctx.globalAlpha = 1;
-
-  // draw ring in front of planet (top half)
-  if (p.ring) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.ellipse(x, y + r * 0.1, r * 2.2, r * 0.5, 0, Math.PI, Math.PI * 2);
-    ctx.strokeStyle = p.ringColor;
-    ctx.lineWidth = 4;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.ellipse(x, y + r * 0.1, r * 1.8, r * 0.4, 0, Math.PI, Math.PI * 2);
-    ctx.strokeStyle = p.ringColor2;
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    ctx.restore();
-  }
+  const drawY = p.y + Math.sin(p.wobble) * 12;
+  ctx.drawImage(p.spriteCanvas, Math.floor(p.x - p.w / 2), Math.floor(drawY - p.h / 2));
 }
 
 function updatePlanets() {
@@ -189,9 +201,7 @@ function updatePlanets() {
     p.x += p.speedX;
     p.y += p.speedY;
     p.wobble += p.wobbleSpeed;
-
-    // wrap around screen edges
-    const margin = p.radius * 3;
+    const margin = Math.max(p.w, p.h);
     if (p.x < -margin) p.x = starCanvas.width + margin;
     if (p.x > starCanvas.width + margin) p.x = -margin;
     if (p.y < -margin) p.y = starCanvas.height + margin;
