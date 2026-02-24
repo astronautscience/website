@@ -30,6 +30,11 @@ function initStars() {
 
 function drawStars() {
   starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
+
+  // draw planets behind stars (far away feel)
+  updatePlanets();
+  planets.forEach(p => drawPlanet(starCtx, p));
+
   stars.forEach(s => {
     s.twinkle += s.twinkleSpeed;
     const brightness = 0.4 + 0.6 * Math.abs(Math.sin(s.twinkle));
@@ -45,7 +50,161 @@ function drawStars() {
   requestAnimationFrame(drawStars);
 }
 
-window.addEventListener('resize', resizeStarCanvas);
+// ---- PLANETS ----
+const planets = [];
+
+function createPlanets() {
+  planets.length = 0;
+  const planetDefs = [
+    { // big ringed gas giant (Saturn-like)
+      radius: 28,
+      color: '#e8a84c',
+      color2: '#c47a2a',
+      stripe: '#d4943a',
+      ring: true,
+      ringColor: 'rgba(210,180,140,0.5)',
+      ringColor2: 'rgba(180,150,100,0.3)',
+    },
+    { // blue ice planet (Neptune-like)
+      radius: 20,
+      color: '#4a8ee6',
+      color2: '#2a5eaa',
+      stripe: '#5a9ef6',
+      ring: false,
+    },
+    { // small red planet (Mars-like)
+      radius: 14,
+      color: '#d45a3a',
+      color2: '#a83a1a',
+      stripe: '#c44a2a',
+      ring: false,
+    },
+    { // purple planet with ring
+      radius: 22,
+      color: '#9b68ee',
+      color2: '#6b38be',
+      stripe: '#8b58de',
+      ring: true,
+      ringColor: 'rgba(155,104,238,0.4)',
+      ringColor2: 'rgba(107,56,190,0.25)',
+    },
+    { // tiny green moon
+      radius: 9,
+      color: '#4ade80',
+      color2: '#22863a',
+      stripe: '#3ace70',
+      ring: false,
+    },
+    { // pink/magenta planet
+      radius: 16,
+      color: '#e84a8a',
+      color2: '#b82a6a',
+      stripe: '#d83a7a',
+      ring: false,
+    },
+  ];
+
+  planetDefs.forEach((def, i) => {
+    planets.push({
+      ...def,
+      x: Math.random() * starCanvas.width,
+      y: 80 + Math.random() * (starCanvas.height - 160),
+      speedX: (0.08 + Math.random() * 0.15) * (Math.random() < 0.5 ? 1 : -1),
+      speedY: (0.02 + Math.random() * 0.06) * (Math.random() < 0.5 ? 1 : -1),
+      wobble: Math.random() * Math.PI * 2,
+      wobbleSpeed: 0.003 + Math.random() * 0.005,
+    });
+  });
+}
+
+function drawPlanet(ctx, p) {
+  const r = p.radius;
+  const x = Math.floor(p.x);
+  const y = Math.floor(p.y + Math.sin(p.wobble) * 8);
+
+  // draw ring behind planet (bottom half)
+  if (p.ring) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(x, y + r * 0.1, r * 2.2, r * 0.5, 0, 0, Math.PI);
+    ctx.strokeStyle = p.ringColor;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(x, y + r * 0.1, r * 1.8, r * 0.4, 0, 0, Math.PI);
+    ctx.strokeStyle = p.ringColor2;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // planet body with pixel-style rendering
+  for (let py = -r; py <= r; py++) {
+    for (let px = -r; px <= r; px++) {
+      const dist = Math.sqrt(px * px + py * py);
+      if (dist <= r) {
+        // shading: lighter on top-left, darker on bottom-right
+        const shade = (px + py) / (r * 2);
+        let color;
+        // horizontal stripes for gas giant effect
+        if (Math.abs(py) % 6 < 2) {
+          color = p.stripe;
+        } else if (shade < -0.2) {
+          color = p.color;
+        } else {
+          color = p.color2;
+        }
+        // edge darkening
+        const edgeFade = dist / r;
+        const alpha = edgeFade > 0.85 ? 1 - (edgeFade - 0.85) * 5 : 1;
+
+        ctx.globalAlpha = Math.max(0, alpha);
+        ctx.fillStyle = color;
+        // use 2x2 blocks for pixelated look
+        ctx.fillRect(x + px * 2, y + py * 2, 2, 2);
+      }
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  // draw ring in front of planet (top half)
+  if (p.ring) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(x, y + r * 0.1, r * 2.2, r * 0.5, 0, Math.PI, Math.PI * 2);
+    ctx.strokeStyle = p.ringColor;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(x, y + r * 0.1, r * 1.8, r * 0.4, 0, Math.PI, Math.PI * 2);
+    ctx.strokeStyle = p.ringColor2;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function updatePlanets() {
+  planets.forEach(p => {
+    p.x += p.speedX;
+    p.y += p.speedY;
+    p.wobble += p.wobbleSpeed;
+
+    // wrap around screen edges
+    const margin = p.radius * 3;
+    if (p.x < -margin) p.x = starCanvas.width + margin;
+    if (p.x > starCanvas.width + margin) p.x = -margin;
+    if (p.y < -margin) p.y = starCanvas.height + margin;
+    if (p.y > starCanvas.height + margin) p.y = -margin;
+  });
+}
+
+createPlanets();
+
+window.addEventListener('resize', () => {
+  resizeStarCanvas();
+  createPlanets();
+});
 resizeStarCanvas();
 drawStars();
 
