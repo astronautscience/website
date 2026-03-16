@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nesesitys</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background-color: black;
+            color: white;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+        .widget {
+            position: absolute;
+            cursor: grab;
+            user-select: none;
+        }
+        .widget.dragging { cursor: grabbing; }
+
+        /* Clock */
+        #clock {
+            font-size: 8rem;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Date */
+        #date-section {
+            top: 5%;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            font-size: 2rem;
+        }
+
+        /* Weather */
+        #weather-section {
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+        #weather-section input {
+            padding: 14px 20px;
+            font-size: 2rem;
+            border: 2px solid white;
+            border-radius: 8px;
+            background: transparent;
+            color: white;
+            outline: none;
+            text-align: center;
+        }
+        #weather-section input::placeholder { color: #888; }
+        #weather-info { margin-top: 16px; font-size: 3rem; }
+
+        /* Calculator */
+        #calc-section {
+            top: 20%;
+            left: 5%;
+            background: #111;
+            border: 2px solid #444;
+            border-radius: 12px;
+            padding: 16px;
+            width: 280px;
+        }
+        #calc-section h3 { margin: 0 0 10px; text-align: center; font-size: 1.5rem; }
+        #calc-display {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.8rem;
+            border: 1px solid #555;
+            border-radius: 6px;
+            background: #222;
+            color: white;
+            text-align: right;
+            margin-bottom: 10px;
+        }
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+        .calc-btn {
+            padding: 14px;
+            font-size: 1.3rem;
+            border: none;
+            border-radius: 6px;
+            background: #333;
+            color: white;
+            cursor: pointer;
+        }
+        .calc-btn:hover { background: #555; }
+        .calc-btn.op { background: #e67e22; }
+        .calc-btn.op:hover { background: #f39c12; }
+
+        /* Timer */
+        #timer-section {
+            top: 20%;
+            right: 5%;
+            background: #111;
+            border: 2px solid #444;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            width: 300px;
+        }
+        #timer-section h3 { margin: 0 0 10px; font-size: 1.5rem; }
+        #timer-display, #stopwatch-display { font-size: 3rem; margin: 10px 0; }
+        .timer-btn {
+            padding: 10px 18px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 6px;
+            background: #333;
+            color: white;
+            cursor: pointer;
+            margin: 4px;
+        }
+        .timer-btn:hover { background: #555; }
+        #timer-input {
+            width: 80px;
+            padding: 8px;
+            font-size: 1.2rem;
+            border: 1px solid #555;
+            border-radius: 6px;
+            background: #222;
+            color: white;
+            text-align: center;
+        }
+        .tab-bar { margin-bottom: 10px; }
+        .tab-btn {
+            padding: 8px 16px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 6px 6px 0 0;
+            background: #222;
+            color: #888;
+            cursor: pointer;
+        }
+        .tab-btn.active { background: #333; color: white; }
+
+        /* Notes */
+        #notes-section {
+            bottom: 10%;
+            left: 5%;
+            background: #111;
+            border: 2px solid #444;
+            border-radius: 12px;
+            padding: 16px;
+            width: 320px;
+        }
+        #notes-section h3 { margin: 0 0 10px; font-size: 1.5rem; text-align: center; }
+        #todo-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 1.1rem;
+            border: 1px solid #555;
+            border-radius: 6px;
+            background: #222;
+            color: white;
+            outline: none;
+            margin-bottom: 8px;
+        }
+        #todo-input::placeholder { color: #888; }
+        #todo-list { list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto; }
+        #todo-list li {
+            padding: 8px;
+            font-size: 1.1rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #todo-list li.done span { text-decoration: line-through; color: #888; }
+        .todo-del {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        .todo-check {
+            background: none;
+            border: none;
+            color: #2ecc71;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-right: 6px;
+        }
+
+        /* Battery */
+        #battery-section {
+            top: 5%;
+            right: 5%;
+            text-align: center;
+            font-size: 2rem;
+        }
+        #battery-bar {
+            width: 120px;
+            height: 24px;
+            border: 2px solid white;
+            border-radius: 6px;
+            margin: 8px auto;
+            overflow: hidden;
+        }
+        #battery-fill {
+            height: 100%;
+            background: #2ecc71;
+            transition: width 0.5s;
+        }
+
+        /* Bookmarks */
+        #bookmarks-section {
+            bottom: 10%;
+            right: 5%;
+            background: #111;
+            border: 2px solid #444;
+            border-radius: 12px;
+            padding: 16px;
+            width: 300px;
+        }
+        #bookmarks-section h3 { margin: 0 0 10px; font-size: 1.5rem; text-align: center; }
+        .bm-row { display: flex; gap: 6px; margin-bottom: 8px; }
+        .bm-row input {
+            flex: 1;
+            padding: 8px;
+            font-size: 1rem;
+            border: 1px solid #555;
+            border-radius: 6px;
+            background: #222;
+            color: white;
+            outline: none;
+        }
+        .bm-row input::placeholder { color: #888; }
+        .bm-add {
+            padding: 8px 14px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 6px;
+            background: #333;
+            color: white;
+            cursor: pointer;
+        }
+        .bm-add:hover { background: #555; }
+        #bm-list { list-style: none; padding: 0; margin: 0; max-height: 180px; overflow-y: auto; }
+        #bm-list li {
+            padding: 6px 8px;
+            font-size: 1.1rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #bm-list a { color: #3498db; text-decoration: none; }
+        #bm-list a:hover { text-decoration: underline; }
+        .bm-del {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* Astronaut Science */
+        #astro-card {
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #111;
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 6px 14px;
+            text-align: center;
+            font-size: 0.7rem;
+        }
+        #astro-card a {
+            color: #3498db;
+            text-decoration: none;
+            font-size: 0.7rem;
+        }
+        #astro-card a:hover { text-decoration: underline; }
+
+        /* Games */
+        #games-section {
+            top: 40%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #111;
+            border: 2px solid #444;
+            border-radius: 12px;
+            padding: 16px;
+            width: 300px;
+        }
+        #games-section h3 { margin: 0 0 10px; font-size: 1.5rem; text-align: center; }
+        .game-link {
+            display: block;
+            padding: 10px 12px;
+            margin: 6px 0;
+            font-size: 1.2rem;
+            color: #9b59b6;
+            text-decoration: none;
+            background: #222;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .game-link:hover { background: #333; color: #bb77dd; }
+    </style>
+</head>
+<body>
+
+    <!-- Date -->
+    <div id="date-section" class="widget"></div>
+
+    <!-- Clock -->
+    <h2 id="clock" class="widget"></h2>
+
+    <!-- Battery -->
+    <div id="battery-section" class="widget">
+        <div id="battery-text"></div>
+        <div id="battery-bar"><div id="battery-fill"></div></div>
+    </div>
+
+    <!-- Weather -->
+    <div id="weather-section" class="widget">
+        <input type="text" id="location-input" placeholder="Type a city and press Enter">
+        <div id="weather-info"></div>
+    </div>
+
+    <!-- Calculator -->
+    <div id="calc-section" class="widget">
+        <h3>Calculator</h3>
+        <input type="text" id="calc-display" readonly>
+        <div class="calc-grid">
+            <button class="calc-btn" data-val="7">7</button>
+            <button class="calc-btn" data-val="8">8</button>
+            <button class="calc-btn" data-val="9">9</button>
+            <button class="calc-btn op" data-val="/">/</button>
+            <button class="calc-btn" data-val="4">4</button>
+            <button class="calc-btn" data-val="5">5</button>
+            <button class="calc-btn" data-val="6">6</button>
+            <button class="calc-btn op" data-val="*">x</button>
+            <button class="calc-btn" data-val="1">1</button>
+            <button class="calc-btn" data-val="2">2</button>
+            <button class="calc-btn" data-val="3">3</button>
+            <button class="calc-btn op" data-val="-">-</button>
+            <button class="calc-btn" data-val="0">0</button>
+            <button class="calc-btn" data-val=".">.</button>
+            <button class="calc-btn op" data-val="=">=</button>
+            <button class="calc-btn op" data-val="+">+</button>
+            <button class="calc-btn" data-val="C" style="grid-column: span 4; background:#c0392b;">Clear</button>
+        </div>
+    </div>
+
+    <!-- Timer / Stopwatch -->
+    <div id="timer-section" class="widget">
+        <h3>Timer / Stopwatch</h3>
+        <div class="tab-bar">
+            <button class="tab-btn active" id="tab-timer">Timer</button>
+            <button class="tab-btn" id="tab-stopwatch">Stopwatch</button>
+        </div>
+        <div id="timer-panel">
+            <div>
+                <input type="number" id="timer-input" placeholder="min" min="0"> min
+            </div>
+            <div id="timer-display">00:00</div>
+            <button class="timer-btn" id="timer-start">Start</button>
+            <button class="timer-btn" id="timer-reset">Reset</button>
+        </div>
+        <div id="stopwatch-panel" style="display:none;">
+            <div id="stopwatch-display">00:00.0</div>
+            <button class="timer-btn" id="sw-start">Start</button>
+            <button class="timer-btn" id="sw-reset">Reset</button>
+        </div>
+    </div>
+
+    <!-- Notes / To-Do -->
+    <div id="notes-section" class="widget">
+        <h3>To-Do List</h3>
+        <input type="text" id="todo-input" placeholder="Add a task and press Enter">
+        <ul id="todo-list"></ul>
+    </div>
+
+    <!-- Games -->
+    <div id="games-section" class="widget">
+        <h3>My Games</h3>
+        <a class="game-link" href="file:///C:/Users/rocit/iCloudDrive/EL%20GAMMs/Banana%20Kingdom/index.html">Banana Kingdom</a>
+        <a class="game-link" href="file:///C:/Users/rocit/iCloudDrive/EL%20GAMMs/DinoLearningGameV2/index.html">DinoLearningGame</a>
+        <a class="game-link" href="file:///C:/Users/rocit/iCloudDrive/EL%20GAMMs/FossilCraft.io/index.html">FossilCraft.io</a>
+        <a class="game-link" href="file:///C:/Users/rocit/iCloudDrive/EL%20GAMMs/PlanetSandbox/index%202.html">PlanetSandbox</a>
+    </div>
+
+    <!-- Bookmarks -->
+    <div id="bookmarks-section" class="widget">
+        <h3>Bookmarks</h3>
+        <div class="bm-row">
+            <input type="text" id="bm-name" placeholder="Name">
+            <input type="text" id="bm-url" placeholder="URL">
+            <button class="bm-add" id="bm-add-btn">+</button>
+        </div>
+        <ul id="bm-list"></ul>
+    </div>
+
+    <!-- Astronaut Science -->
+    <div id="astro-card" class="widget">
+        <a href="https://astronautscience.com/" target="_blank">AstronautScience</a>
+    </div>
+
+    <script>
+        // ---- Drag & Drop System ----
+        let activeDrag = null;
+        let dragOffsetX, dragOffsetY;
+
+        function initDrag(el, saveKey, interactiveSelector) {
+            // Load saved position
+            const saved = JSON.parse(localStorage.getItem(saveKey) || 'null');
+            if (saved) {
+                el.style.left = saved.left;
+                el.style.top = saved.top;
+                el.style.bottom = 'auto';
+                el.style.right = 'auto';
+                el.style.transform = 'none';
+            }
+
+            function startDrag(x, y, e) {
+                if (interactiveSelector && e.target.closest(interactiveSelector)) return;
+                activeDrag = { el, saveKey };
+                el.classList.add('dragging');
+                const rect = el.getBoundingClientRect();
+                dragOffsetX = x - rect.left;
+                dragOffsetY = y - rect.top;
+                el.style.transform = 'none';
+            }
+
+            el.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY, e));
+            el.addEventListener('touchstart', (e) => {
+                const t = e.touches[0];
+                startDrag(t.clientX, t.clientY, e);
+            }, { passive: true });
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            if (!activeDrag) return;
+            activeDrag.el.style.left = (e.clientX - dragOffsetX) + 'px';
+            activeDrag.el.style.top = (e.clientY - dragOffsetY) + 'px';
+            activeDrag.el.style.bottom = 'auto';
+            activeDrag.el.style.right = 'auto';
+        });
+        document.addEventListener('touchmove', (e) => {
+            if (!activeDrag) return;
+            const t = e.touches[0];
+            activeDrag.el.style.left = (t.clientX - dragOffsetX) + 'px';
+            activeDrag.el.style.top = (t.clientY - dragOffsetY) + 'px';
+            activeDrag.el.style.bottom = 'auto';
+            activeDrag.el.style.right = 'auto';
+        }, { passive: true });
+
+        function endDrag() {
+            if (!activeDrag) return;
+            localStorage.setItem(activeDrag.saveKey, JSON.stringify({
+                left: activeDrag.el.style.left,
+                top: activeDrag.el.style.top
+            }));
+            activeDrag.el.classList.remove('dragging');
+            activeDrag = null;
+        }
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
+
+        // ---- Clock ----
+        function updateClock() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('clock').textContent = h + ':' + m + ':' + s;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+        initDrag(document.getElementById('clock'), 'clockPos');
+
+        // ---- Date ----
+        function updateDate() {
+            const now = new Date();
+            const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('date-section').textContent = now.toLocaleDateString(undefined, opts);
+        }
+        updateDate();
+        setInterval(updateDate, 60000);
+        initDrag(document.getElementById('date-section'), 'datePos');
+
+        // ---- Battery ----
+        async function updateBattery() {
+            const bt = document.getElementById('battery-text');
+            const bf = document.getElementById('battery-fill');
+            if ('getBattery' in navigator) {
+                const battery = await navigator.getBattery();
+                const pct = Math.round(battery.level * 100);
+                bt.textContent = (battery.charging ? 'Charging ' : 'Battery ') + pct + '%';
+                bf.style.width = pct + '%';
+                bf.style.background = pct > 20 ? '#2ecc71' : '#e74c3c';
+                battery.addEventListener('levelchange', () => {
+                    const p = Math.round(battery.level * 100);
+                    bt.textContent = (battery.charging ? 'Charging ' : 'Battery ') + p + '%';
+                    bf.style.width = p + '%';
+                    bf.style.background = p > 20 ? '#2ecc71' : '#e74c3c';
+                });
+            } else {
+                bt.textContent = 'Battery N/A';
+            }
+        }
+        updateBattery();
+        initDrag(document.getElementById('battery-section'), 'batteryPos');
+
+        // ---- Weather ----
+        const locInput = document.getElementById('location-input');
+        const weatherInfo = document.getElementById('weather-info');
+        const savedCity = localStorage.getItem('weatherCity');
+        const savedWeather = localStorage.getItem('weatherText');
+        if (savedCity) locInput.value = savedCity;
+        if (savedWeather) weatherInfo.textContent = savedWeather;
+
+        locInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const city = locInput.value.trim();
+                if (!city) return;
+                weatherInfo.textContent = 'Loading...';
+                fetch('https://wttr.in/' + encodeURIComponent(city) + '?format=%C+%t')
+                    .then(r => r.text())
+                    .then(data => {
+                        const text = city + ': ' + data;
+                        weatherInfo.textContent = text;
+                        localStorage.setItem('weatherCity', city);
+                        localStorage.setItem('weatherText', text);
+                    })
+                    .catch(() => { weatherInfo.textContent = 'Could not get weather.'; });
+            }
+        });
+        initDrag(document.getElementById('weather-section'), 'weatherPos', 'input');
+
+        // ---- Calculator ----
+        const calcDisplay = document.getElementById('calc-display');
+        let calcExpr = '';
+        document.querySelectorAll('.calc-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const val = btn.dataset.val;
+                if (val === 'C') { calcExpr = ''; calcDisplay.value = ''; }
+                else if (val === '=') {
+                    try { calcDisplay.value = Function('"use strict"; return (' + calcExpr + ')')(); }
+                    catch { calcDisplay.value = 'Error'; }
+                    calcExpr = calcDisplay.value === 'Error' ? '' : String(calcDisplay.value);
+                } else {
+                    calcExpr += val;
+                    calcDisplay.value = calcExpr;
+                }
+            });
+        });
+        initDrag(document.getElementById('calc-section'), 'calcPos', 'button, input');
+
+        // ---- Timer / Stopwatch ----
+        const tabTimer = document.getElementById('tab-timer');
+        const tabSW = document.getElementById('tab-stopwatch');
+        const timerPanel = document.getElementById('timer-panel');
+        const swPanel = document.getElementById('stopwatch-panel');
+
+        tabTimer.addEventListener('click', () => {
+            tabTimer.classList.add('active'); tabSW.classList.remove('active');
+            timerPanel.style.display = ''; swPanel.style.display = 'none';
+        });
+        tabSW.addEventListener('click', () => {
+            tabSW.classList.add('active'); tabTimer.classList.remove('active');
+            swPanel.style.display = ''; timerPanel.style.display = 'none';
+        });
+
+        // Timer
+        let timerInterval = null;
+        let timerSeconds = 0;
+        const timerDisplay = document.getElementById('timer-display');
+        const timerInput = document.getElementById('timer-input');
+
+        function formatTimer(s) {
+            const m = Math.floor(s / 60);
+            const sec = s % 60;
+            return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+        }
+
+        document.getElementById('timer-start').addEventListener('click', function() {
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; this.textContent = 'Start'; return; }
+            if (timerSeconds <= 0) timerSeconds = (parseInt(timerInput.value) || 0) * 60;
+            if (timerSeconds <= 0) return;
+            this.textContent = 'Pause';
+            timerInterval = setInterval(() => {
+                timerSeconds--;
+                timerDisplay.textContent = formatTimer(timerSeconds);
+                if (timerSeconds <= 0) {
+                    clearInterval(timerInterval); timerInterval = null;
+                    timerDisplay.textContent = "Time's up!";
+                    document.getElementById('timer-start').textContent = 'Start';
+                }
+            }, 1000);
+        });
+        document.getElementById('timer-reset').addEventListener('click', () => {
+            clearInterval(timerInterval); timerInterval = null;
+            timerSeconds = 0; timerDisplay.textContent = '00:00';
+            document.getElementById('timer-start').textContent = 'Start';
+        });
+
+        // Stopwatch
+        let swInterval = null;
+        let swTime = 0;
+        const swDisplay = document.getElementById('stopwatch-display');
+
+        document.getElementById('sw-start').addEventListener('click', function() {
+            if (swInterval) { clearInterval(swInterval); swInterval = null; this.textContent = 'Start'; return; }
+            this.textContent = 'Pause';
+            swInterval = setInterval(() => {
+                swTime += 100;
+                const m = Math.floor(swTime / 60000);
+                const s = Math.floor((swTime % 60000) / 1000);
+                const ms = Math.floor((swTime % 1000) / 100);
+                swDisplay.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + '.' + ms;
+            }, 100);
+        });
+        document.getElementById('sw-reset').addEventListener('click', () => {
+            clearInterval(swInterval); swInterval = null;
+            swTime = 0; swDisplay.textContent = '00:00.0';
+            document.getElementById('sw-start').textContent = 'Start';
+        });
+
+        initDrag(document.getElementById('timer-section'), 'timerPos', 'button, input');
+
+        // ---- Notes / To-Do ----
+        let todos = JSON.parse(localStorage.getItem('todos') || '[]');
+        const todoList = document.getElementById('todo-list');
+        const todoInput = document.getElementById('todo-input');
+
+        function renderTodos() {
+            todoList.innerHTML = '';
+            todos.forEach((t, i) => {
+                const li = document.createElement('li');
+                if (t.done) li.classList.add('done');
+                const check = document.createElement('button');
+                check.className = 'todo-check';
+                check.textContent = t.done ? '↩' : '✓';
+                check.addEventListener('click', () => { todos[i].done = !todos[i].done; saveTodos(); renderTodos(); });
+                const span = document.createElement('span');
+                span.textContent = t.text;
+                const del = document.createElement('button');
+                del.className = 'todo-del';
+                del.textContent = '✕';
+                del.addEventListener('click', () => { todos.splice(i, 1); saveTodos(); renderTodos(); });
+                const left = document.createElement('div');
+                left.append(check, span);
+                li.append(left, del);
+                todoList.appendChild(li);
+            });
+        }
+        function saveTodos() { localStorage.setItem('todos', JSON.stringify(todos)); }
+
+        todoInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && todoInput.value.trim()) {
+                todos.push({ text: todoInput.value.trim(), done: false });
+                todoInput.value = '';
+                saveTodos();
+                renderTodos();
+            }
+        });
+        renderTodos();
+        initDrag(document.getElementById('notes-section'), 'notesPos', 'input, button, ul');
+
+        // ---- Bookmarks ----
+        let bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
+        const bmList = document.getElementById('bm-list');
+        const bmName = document.getElementById('bm-name');
+        const bmUrl = document.getElementById('bm-url');
+
+        function renderBookmarks() {
+            bmList.innerHTML = '';
+            bookmarks.forEach((b, i) => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = b.url.startsWith('http') ? b.url : 'https://' + b.url;
+                a.target = '_blank';
+                a.textContent = b.name;
+                const del = document.createElement('button');
+                del.className = 'bm-del';
+                del.textContent = '✕';
+                del.addEventListener('click', () => { bookmarks.splice(i, 1); saveBookmarks(); renderBookmarks(); });
+                li.append(a, del);
+                bmList.appendChild(li);
+            });
+        }
+        function saveBookmarks() { localStorage.setItem('bookmarks', JSON.stringify(bookmarks)); }
+
+        document.getElementById('bm-add-btn').addEventListener('click', () => {
+            const name = bmName.value.trim();
+            const url = bmUrl.value.trim();
+            if (name && url) {
+                bookmarks.push({ name, url });
+                bmName.value = ''; bmUrl.value = '';
+                saveBookmarks();
+                renderBookmarks();
+            }
+        });
+        renderBookmarks();
+        // Hide games on mobile/iPad since local file links don't work there
+        const gamesEl = document.getElementById('games-section');
+        if ('ontouchstart' in window && /iPad|iPhone|Android/i.test(navigator.userAgent)) {
+            gamesEl.style.display = 'none';
+        }
+        initDrag(gamesEl, 'gamesPos', 'a');
+        initDrag(document.getElementById('astro-card'), 'astroPos', 'a');
+        initDrag(document.getElementById('bookmarks-section'), 'bookmarksPos', 'input, button, a, ul');
+    </script>
+</body>
+</html>
