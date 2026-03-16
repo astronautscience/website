@@ -307,30 +307,6 @@
         }
         #astro-card a:hover { text-decoration: underline; }
 
-        /* Games */
-        #games-section {
-            top: 40%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #111;
-            border: 2px solid #444;
-            border-radius: 12px;
-            padding: 16px;
-            width: 300px;
-        }
-        #games-section h3 { margin: 0 0 10px; font-size: 1.5rem; text-align: center; }
-        .game-link {
-            display: block;
-            padding: 10px 12px;
-            margin: 6px 0;
-            font-size: 1.2rem;
-            color: #9b59b6;
-            text-decoration: none;
-            background: #222;
-            border-radius: 6px;
-            text-align: center;
-        }
-        .game-link:hover { background: #333; color: #bb77dd; }
     </style>
 </head>
 <body>
@@ -405,15 +381,6 @@
         <h3>To-Do List</h3>
         <input type="text" id="todo-input" placeholder="Add a task and press Enter">
         <ul id="todo-list"></ul>
-    </div>
-
-    <!-- Games -->
-    <div id="games-section" class="widget">
-        <h3>My Games</h3>
-        <a class="game-link" href="file:///C:/Users/rocit/iCloudDrive/EL%20GAMMs/Banana%20Kingdom/index.html">Banana Kingdom</a>
-        <a class="game-link" href="file:///C:/Users/rocit/iCloudDrive/EL%20GAMMs/DinoLearningGameV2/index.html">DinoLearningGame</a>
-        <a class="game-link" href="file:///C:/Users/rocit/iCloudDrive/EL%20GAMMs/FossilCraft.io/index.html">FossilCraft.io</a>
-        <a class="game-link" href="file:///C:/Users/rocit/iCloudDrive/EL%20GAMMs/PlanetSandbox/index%202.html">PlanetSandbox</a>
     </div>
 
     <!-- Bookmarks -->
@@ -731,12 +698,6 @@
             }
         });
         renderBookmarks();
-        // Hide games on mobile/iPad since local file links don't work there
-        const gamesEl = document.getElementById('games-section');
-        if ('ontouchstart' in window && /iPad|iPhone|Android/i.test(navigator.userAgent)) {
-            gamesEl.style.display = 'none';
-        }
-        initDrag(gamesEl, 'gamesPos', 'a');
         initDrag(document.getElementById('astro-card'), 'astroPos', 'a');
         initDrag(document.getElementById('bookmarks-section'), 'bookmarksPos', 'input, button, a, ul');
     </script>
