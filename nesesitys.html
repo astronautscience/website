@@ -10,8 +10,8 @@
             background-color: black;
             color: white;
             margin: 0;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow: auto;
             font-family: sans-serif;
         }
         .widget {
@@ -438,6 +438,7 @@
 
             el.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY, e));
             el.addEventListener('touchstart', (e) => {
+                if (e.touches.length > 1) return; // let pinch-zoom through
                 const t = e.touches[0];
                 startDrag(t.clientX, t.clientY, e);
             }, { passive: true });
@@ -451,6 +452,7 @@
             activeDrag.el.style.right = 'auto';
         });
         document.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 1) { activeDrag = null; return; } // let pinch-zoom through
             if (!activeDrag) return;
             const t = e.touches[0];
             activeDrag.el.style.left = (t.clientX - dragOffsetX) + 'px';
