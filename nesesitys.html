@@ -502,7 +502,7 @@
                 el.style.right = 'auto';
                 el.style.bottom = 'auto';
                 el.style.transform = 'none';
-                activeDrag = { el, saveKey };
+                activeDrag = { el, saveKey, startLeft: el.style.left, startTop: el.style.top };
                 el.classList.add('dragging');
                 dragOffsetX = x / z - rect.left / z;
                 dragOffsetY = y / z - rect.top / z;
@@ -520,11 +520,15 @@
             return parseFloat(localStorage.getItem('zoomLevel')) || 1;
         }
 
+        const dragSpeed = 2.75;
+
         document.addEventListener('mousemove', (e) => {
             if (!activeDrag) return;
             const z = getZoom();
-            activeDrag.el.style.left = (e.clientX / z - dragOffsetX) + 'px';
-            activeDrag.el.style.top = (e.clientY / z - dragOffsetY) + 'px';
+            const dx = e.clientX / z - dragOffsetX - parseFloat(activeDrag.startLeft);
+            const dy = e.clientY / z - dragOffsetY - parseFloat(activeDrag.startTop);
+            activeDrag.el.style.left = (parseFloat(activeDrag.startLeft) + dx * dragSpeed) + 'px';
+            activeDrag.el.style.top = (parseFloat(activeDrag.startTop) + dy * dragSpeed) + 'px';
             activeDrag.el.style.bottom = 'auto';
             activeDrag.el.style.right = 'auto';
         });
@@ -533,8 +537,10 @@
             if (!activeDrag) return;
             const z = getZoom();
             const t = e.touches[0];
-            activeDrag.el.style.left = (t.clientX / z - dragOffsetX) + 'px';
-            activeDrag.el.style.top = (t.clientY / z - dragOffsetY) + 'px';
+            const dx = t.clientX / z - dragOffsetX - parseFloat(activeDrag.startLeft);
+            const dy = t.clientY / z - dragOffsetY - parseFloat(activeDrag.startTop);
+            activeDrag.el.style.left = (parseFloat(activeDrag.startLeft) + dx * dragSpeed) + 'px';
+            activeDrag.el.style.top = (parseFloat(activeDrag.startTop) + dy * dragSpeed) + 'px';
             activeDrag.el.style.bottom = 'auto';
             activeDrag.el.style.right = 'auto';
         }, { passive: true });
