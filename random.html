@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Number - AstronautScience</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%;
+            min-height: 100vh;
+            font-family: 'Press Start 2P', monospace;
+            background: #0a0a2e;
+            color: #e0e0ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            image-rendering: pixelated;
+        }
+        h1 {
+            font-size: clamp(1rem, 4vw, 2rem);
+            color: #00ffaa;
+            text-shadow: 0 0 10px #00ffaa, 4px 4px 0 #0a3a2a;
+            margin-bottom: 50px;
+        }
+        .container {
+            background: #12124a;
+            border: 3px solid #7b68ee;
+            box-shadow: 6px 6px 0 #050520;
+            padding: 50px 40px;
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+        }
+        .inputs {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .inputs label {
+            font-size: clamp(0.5rem, 1.5vw, 0.8rem);
+            color: #7b68ee;
+        }
+        .inputs input {
+            width: 120px;
+            padding: 14px;
+            font-size: clamp(0.7rem, 2vw, 1.2rem);
+            font-family: 'Press Start 2P', monospace;
+            border: 3px solid #7b68ee;
+            background: #0a0a2e;
+            color: #e0e0ff;
+            text-align: center;
+            outline: none;
+        }
+        .inputs input:focus {
+            border-color: #00ffaa;
+            box-shadow: 0 0 10px rgba(0, 255, 170, 0.3);
+        }
+        #result {
+            font-size: clamp(2rem, 8vw, 5rem);
+            color: #00ffaa;
+            text-shadow: 0 0 20px #00ffaa, 0 0 40px #00ffaa;
+            margin: 30px 0;
+            min-height: 80px;
+            transition: transform 0.1s;
+        }
+        #result.pop {
+            transform: scale(1.2);
+        }
+        .gen-btn {
+            padding: 18px 40px;
+            font-size: clamp(0.6rem, 2vw, 1rem);
+            font-family: 'Press Start 2P', monospace;
+            border: 3px solid #00ffaa;
+            background: transparent;
+            color: #00ffaa;
+            cursor: pointer;
+            box-shadow: 4px 4px 0 #0a3a2a;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .gen-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 #0a3a2a, 0 0 20px rgba(0, 255, 170, 0.3);
+        }
+        .gen-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 #0a3a2a;
+        }
+        .back-link {
+            margin-top: 40px;
+            font-size: clamp(0.4rem, 1.2vw, 0.6rem);
+            color: #7b68ee;
+            text-decoration: none;
+        }
+        .back-link:hover { color: #00ffaa; }
+    </style>
+</head>
+<body>
+    <h1>RANDOM NUMBER</h1>
+    <div class="container">
+        <div class="inputs">
+            <label>MIN</label>
+            <input type="number" id="rng-min" value="1">
+            <label>MAX</label>
+            <input type="number" id="rng-max" value="100">
+        </div>
+        <div id="result">?</div>
+        <button class="gen-btn" id="rng-go">GENERATE</button>
+    </div>
+    <a href="index.html" class="back-link">&lt; BACK TO ASTRONAUTSCIENCE</a>
+
+    <script>
+        const result = document.getElementById('result');
+        document.getElementById('rng-go').addEventListener('click', () => {
+            const min = parseInt(document.getElementById('rng-min').value) || 0;
+            const max = parseInt(document.getElementById('rng-max').value) || 100;
+            const num = Math.floor(Math.random() * (max - min + 1)) + min;
+            result.textContent = num;
+            result.classList.add('pop');
+            setTimeout(() => result.classList.remove('pop'), 150);
+        });
+    </script>
+</body>
+</html>
