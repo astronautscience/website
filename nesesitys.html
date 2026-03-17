@@ -495,12 +495,16 @@
 
             function startDrag(x, y, e) {
                 if (interactiveSelector && e.target.closest(interactiveSelector)) return;
+                const rect = el.getBoundingClientRect();
+                el.style.left = rect.left + 'px';
+                el.style.top = rect.top + 'px';
+                el.style.right = 'auto';
+                el.style.bottom = 'auto';
+                el.style.transform = 'none';
                 activeDrag = { el, saveKey };
                 el.classList.add('dragging');
-                const rect = el.getBoundingClientRect();
                 dragOffsetX = x - rect.left;
                 dragOffsetY = y - rect.top;
-                el.style.transform = 'none';
             }
 
             el.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY, e));
