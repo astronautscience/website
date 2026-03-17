@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Converter - AstronautScience</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%;
+            min-height: 100vh;
+            font-family: 'Press Start 2P', monospace;
+            background: #0a0a2e;
+            color: #e0e0ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            image-rendering: pixelated;
+        }
+        h1 {
+            font-size: clamp(1rem, 4vw, 2rem);
+            color: #00ffaa;
+            text-shadow: 0 0 10px #00ffaa, 4px 4px 0 #0a3a2a;
+            margin-bottom: 40px;
+        }
+        .container {
+            background: #12124a;
+            border: 3px solid #7b68ee;
+            box-shadow: 6px 6px 0 #050520;
+            padding: 40px 30px;
+            text-align: center;
+            max-width: 650px;
+            width: 90%;
+        }
+        .category-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        .cat-btn {
+            padding: 10px 16px;
+            font-size: clamp(0.35rem, 1vw, 0.55rem);
+            font-family: 'Press Start 2P', monospace;
+            border: 2px solid #7b68ee;
+            background: transparent;
+            color: #7b68ee;
+            cursor: pointer;
+        }
+        .cat-btn.active {
+            background: #7b68ee;
+            color: #0a0a2e;
+        }
+        .cat-btn:hover { border-color: #00ffaa; color: #00ffaa; }
+        .cat-btn.active:hover { background: #00ffaa; border-color: #00ffaa; }
+        .convert-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .convert-row input {
+            width: 150px;
+            padding: 14px;
+            font-size: clamp(0.6rem, 1.8vw, 1rem);
+            font-family: 'Press Start 2P', monospace;
+            border: 3px solid #7b68ee;
+            background: #0a0a2e;
+            color: #e0e0ff;
+            text-align: center;
+            outline: none;
+        }
+        .convert-row input:focus {
+            border-color: #00ffaa;
+            box-shadow: 0 0 10px rgba(0, 255, 170, 0.3);
+        }
+        .convert-row select {
+            padding: 14px;
+            font-size: clamp(0.45rem, 1.2vw, 0.7rem);
+            font-family: 'Press Start 2P', monospace;
+            border: 3px solid #7b68ee;
+            background: #0a0a2e;
+            color: #e0e0ff;
+            outline: none;
+            cursor: pointer;
+        }
+        .convert-row select:focus { border-color: #00ffaa; }
+        .arrow {
+            font-size: 1.5rem;
+            color: #00ffaa;
+        }
+        #result {
+            font-size: clamp(1rem, 4vw, 2.5rem);
+            color: #00ffaa;
+            text-shadow: 0 0 15px #00ffaa;
+            margin: 25px 0;
+            min-height: 50px;
+            word-break: break-all;
+        }
+        .back-link {
+            margin-top: 40px;
+            font-size: clamp(0.4rem, 1.2vw, 0.6rem);
+            color: #7b68ee;
+            text-decoration: none;
+        }
+        .back-link:hover { color: #00ffaa; }
+    </style>
+</head>
+<body>
+    <h1>UNIT CONVERTER</h1>
+    <div class="container">
+        <div class="category-bar">
+            <button class="cat-btn active" data-cat="length">LENGTH</button>
+            <button class="cat-btn" data-cat="weight">WEIGHT</button>
+            <button class="cat-btn" data-cat="temp">TEMP</button>
+            <button class="cat-btn" data-cat="speed">SPEED</button>
+            <button class="cat-btn" data-cat="volume">VOLUME</button>
+            <button class="cat-btn" data-cat="area">AREA</button>
+            <button class="cat-btn" data-cat="time">TIME</button>
+        </div>
+        <div class="convert-row">
+            <input type="number" id="input-val" value="1">
+            <select id="from-unit"></select>
+            <span class="arrow">&gt;&gt;</span>
+            <select id="to-unit"></select>
+        </div>
+        <div id="result">—</div>
+    </div>
+    <a href="index.html" class="back-link">&lt; BACK TO ASTRONAUTSCIENCE</a>
+
+    <script>
+        const units = {
+            length: {
+                'inches': 1,
+                'feet': 12,
+                'yards': 36,
+                'miles': 63360,
+                'mm': 0.03937,
+                'cm': 0.3937,
+                'm': 39.3701,
+                'km': 39370.1
+            },
+            weight: {
+                'oz': 1,
+                'lbs': 16,
+                'tons': 32000,
+                'g': 0.035274,
+                'kg': 35.274,
+                'mg': 0.000035274
+            },
+            temp: {
+                'F': 'F',
+                'C': 'C',
+                'K': 'K'
+            },
+            speed: {
+                'mph': 1,
+                'km/h': 0.621371,
+                'm/s': 2.23694,
+                'ft/s': 0.681818,
+                'knots': 1.15078
+            },
+            volume: {
+                'fl oz': 1,
+                'cups': 8,
+                'pints': 16,
+                'quarts': 32,
+                'gallons': 128,
+                'mL': 0.033814,
+                'L': 33.814
+            },
+            area: {
+                'sq in': 1,
+                'sq ft': 144,
+                'sq yd': 1296,
+                'sq mi': 4014489600,
+                'sq cm': 0.155,
+                'sq m': 1550,
+                'acres': 6272640
+            },
+            time: {
+                'seconds': 1,
+                'minutes': 60,
+                'hours': 3600,
+                'days': 86400,
+                'weeks': 604800,
+                'months': 2629800,
+                'years': 31557600
+            }
+        };
+
+        const fromUnit = document.getElementById('from-unit');
+        const toUnit = document.getElementById('to-unit');
+        const inputVal = document.getElementById('input-val');
+        const result = document.getElementById('result');
+        let currentCat = 'length';
+
+        function populateUnits(cat) {
+            fromUnit.innerHTML = '';
+            toUnit.innerHTML = '';
+            const keys = Object.keys(units[cat]);
+            keys.forEach((u, i) => {
+                fromUnit.innerHTML += '<option value="' + u + '">' + u + '</option>';
+                toUnit.innerHTML += '<option value="' + u + '"' + (i === 1 ? ' selected' : '') + '>' + u + '</option>';
+            });
+        }
+
+        function convert() {
+            const val = parseFloat(inputVal.value) || 0;
+            const from = fromUnit.value;
+            const to = toUnit.value;
+
+            if (currentCat === 'temp') {
+                let celsius;
+                if (from === 'C') celsius = val;
+                else if (from === 'F') celsius = (val - 32) * 5 / 9;
+                else celsius = val - 273.15;
+
+                let out;
+                if (to === 'C') out = celsius;
+                else if (to === 'F') out = celsius * 9 / 5 + 32;
+                else out = celsius + 273.15;
+
+                result.textContent = Math.round(out * 10000) / 10000 + ' ' + to;
+            } else {
+                const base = val * units[currentCat][from];
+                const out = base / units[currentCat][to];
+                result.textContent = Math.round(out * 10000) / 10000 + ' ' + to;
+            }
+        }
+
+        document.querySelectorAll('.cat-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelector('.cat-btn.active').classList.remove('active');
+                btn.classList.add('active');
+                currentCat = btn.dataset.cat;
+                populateUnits(currentCat);
+                convert();
+            });
+        });
+
+        inputVal.addEventListener('input', convert);
+        fromUnit.addEventListener('change', convert);
+        toUnit.addEventListener('change', convert);
+
+        populateUnits('length');
+        convert();
+    </script>
+</body>
+</html>
