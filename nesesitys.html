@@ -29,6 +29,15 @@
             transform: translateX(-50%);
         }
 
+        /* Regular Clock */
+        #clock-regular {
+            font-size: 3rem;
+            top: 22%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #888;
+        }
+
         /* Date */
         #date-section {
             top: 5%;
@@ -330,6 +339,9 @@
                 font-size: 3.5rem;
                 text-align: center;
             }
+            #clock-regular {
+                font-size: 1.8rem;
+            }
             #date-section {
                 font-size: 1.3rem;
             }
@@ -361,6 +373,9 @@
             #clock {
                 font-size: 2.5rem;
             }
+            #clock-regular {
+                font-size: 1.3rem;
+            }
             #date-section {
                 font-size: 1rem;
             }
@@ -384,6 +399,7 @@
 
     <!-- Clock -->
     <h2 id="clock" class="widget"></h2>
+    <h3 id="clock-regular" class="widget"></h3>
 
     <!-- Battery -->
     <div id="battery-section" class="widget">
@@ -533,14 +549,18 @@
         // ---- Clock ----
         function updateClock() {
             const now = new Date();
-            const h = String(now.getHours()).padStart(2, '0');
+            const h24 = String(now.getHours()).padStart(2, '0');
             const m = String(now.getMinutes()).padStart(2, '0');
             const s = String(now.getSeconds()).padStart(2, '0');
-            document.getElementById('clock').textContent = h + ':' + m + ':' + s;
+            const h12 = now.getHours() % 12 || 12;
+            const ampm = now.getHours() < 12 ? 'AM' : 'PM';
+            document.getElementById('clock').textContent = h24 + ':' + m + ':' + s;
+            document.getElementById('clock-regular').textContent = h12 + ':' + m + ':' + s + ' ' + ampm;
         }
         updateClock();
         setInterval(updateClock, 1000);
         initDrag(document.getElementById('clock'), 'clockPos');
+        initDrag(document.getElementById('clock-regular'), 'clockRegPos');
 
         // ---- Date ----
         function updateDate() {
