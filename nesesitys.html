@@ -495,16 +495,17 @@
 
             function startDrag(x, y, e) {
                 if (interactiveSelector && e.target.closest(interactiveSelector)) return;
+                const z = getZoom();
                 const rect = el.getBoundingClientRect();
-                el.style.left = rect.left + 'px';
-                el.style.top = rect.top + 'px';
+                el.style.left = (rect.left / z) + 'px';
+                el.style.top = (rect.top / z) + 'px';
                 el.style.right = 'auto';
                 el.style.bottom = 'auto';
                 el.style.transform = 'none';
                 activeDrag = { el, saveKey };
                 el.classList.add('dragging');
-                dragOffsetX = x - rect.left;
-                dragOffsetY = y - rect.top;
+                dragOffsetX = x / z - rect.left / z;
+                dragOffsetY = y / z - rect.top / z;
             }
 
             el.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY, e));
@@ -515,19 +516,25 @@
             }, { passive: true });
         }
 
+        function getZoom() {
+            return parseFloat(localStorage.getItem('zoomLevel')) || 1;
+        }
+
         document.addEventListener('mousemove', (e) => {
             if (!activeDrag) return;
-            activeDrag.el.style.left = (e.clientX - dragOffsetX) + 'px';
-            activeDrag.el.style.top = (e.clientY - dragOffsetY) + 'px';
+            const z = getZoom();
+            activeDrag.el.style.left = (e.clientX / z - dragOffsetX) + 'px';
+            activeDrag.el.style.top = (e.clientY / z - dragOffsetY) + 'px';
             activeDrag.el.style.bottom = 'auto';
             activeDrag.el.style.right = 'auto';
         });
         document.addEventListener('touchmove', (e) => {
-            if (e.touches.length > 1) { activeDrag = null; return; } // let pinch-zoom through
+            if (e.touches.length > 1) { activeDrag = null; return; }
             if (!activeDrag) return;
+            const z = getZoom();
             const t = e.touches[0];
-            activeDrag.el.style.left = (t.clientX - dragOffsetX) + 'px';
-            activeDrag.el.style.top = (t.clientY - dragOffsetY) + 'px';
+            activeDrag.el.style.left = (t.clientX / z - dragOffsetX) + 'px';
+            activeDrag.el.style.top = (t.clientY / z - dragOffsetY) + 'px';
             activeDrag.el.style.bottom = 'auto';
             activeDrag.el.style.right = 'auto';
         }, { passive: true });
