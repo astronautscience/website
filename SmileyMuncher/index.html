@@ -987,14 +987,9 @@
     getGo(() => { if (net && !net.started) beginParty(); });
     getHi((name, id) => { lobbyPeers.set(id, name); updateLobby(); });
 
-    // open the lobby (game doesn't start until the host presses Start)
-    document.getElementById('overlay').classList.add('hidden');
-    document.getElementById('lobbyCode').textContent = code;
+    // start immediately — the code stays visible in-game (top of screen) to share
     document.getElementById('partyCode').textContent = code;
-    document.getElementById('startBtn').style.display = host ? 'inline-block' : 'none';
-    document.getElementById('lobbyWait').style.display = host ? 'none' : 'block';
-    document.getElementById('lobby').classList.remove('hidden');
-    updateLobby();
+    beginParty();
     return true;
   }
   function updateLobby() {
