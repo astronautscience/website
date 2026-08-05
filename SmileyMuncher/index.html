@@ -333,7 +333,7 @@
     const add = (kind, x, z, extra) => {
       const base = CAT[kind] || {};
       const p = Object.assign({ kind, x, z, cx, cy, r: base.r, cr: base.cr, bw: base.bw, bd: base.bd,
-        value: Math.max(.6, (base.r || 8) * (base.r || 8) * 0.06), ci: (rand() * 6) | 0, mesh: null,
+        value: Math.max(.22, (base.r || 8) * (base.r || 8) * 0.019), ci: (rand() * 6) | 0, mesh: null,
         phase: rand() * 6.28, ang: rand() * 6.28, spd: 0 }, extra);
       if (kind === 'person') p.spd = 9 + rand() * 8;
       else if (kind === 'car') p.spd = 34 + rand() * 50;
@@ -351,7 +351,7 @@
         if (rand() < 0.12) continue;
         const w = 46 + rand() * 46, h = 60 + rand() * 300, r = Math.max(w * 0.5, h * 0.16);
         add('building', x0 + gx * cell + cell / 2 + jit(10), z0 + gz * cell + cell / 2 + jit(10),
-          { w, h, r, bw: w, bd: w, value: Math.max(30, r * r * 0.05) });
+          { w, h, r, bw: w, bd: w, value: Math.max(10, r * r * 0.017) });
       }
       for (let i = 0; i < 6; i++) { const [x, z] = spot(); add('car', x, z, { rot: (rand() < .5 ? 0 : Math.PI / 2) }); }
       for (let i = 0; i < 10; i++) { const [x, z] = spot(); add('person', x, z); }
