@@ -13,20 +13,6 @@
 
   <div id="trex-follower"></div>
 
-  <!-- AstroCoin HUD -->
-  <div id="astrocoin-hud">
-    <canvas id="coin-icon" width="20" height="20"></canvas>
-    <span id="coin-count">0</span>
-    <span class="coin-label">ASTROCOINS</span>
-  </div>
-
-  <!-- Achievement Toast -->
-  <div id="achievement-toast" class="hidden">
-    <span class="toast-icon">★</span>
-    <span id="toast-text">ACHIEVEMENT UNLOCKED!</span>
-    <span class="toast-coins">+<span id="toast-amount">0</span></span>
-  </div>
-
   <header>
     <h1>ASTRONAUT<span class="accent">SCIENCE</span></h1>
     <p class="tagline">TAP ANYWHERE &bull; EXPLORE &bull; PLAY GAMES</p>
@@ -58,6 +44,32 @@
         </a>
       </div>
     </section>
+
+    <section class="games-section">
+      <h2>// TOOLS</h2>
+      <div class="games-grid">
+        <a href="nesesitys.html" class="game-card floating-box" data-delay="3">
+          <canvas class="game-icon-canvas" id="icon-nesesitys" width="48" height="48"></canvas>
+          <h3>NESESITYS</h3>
+          <p>YOUR DASHBOARD. CLOCK, WEATHER, CALCULATOR, TIMER, TO-DO LIST, BOOKMARKS, AND MORE.</p>
+        </a>
+        <a href="random.html" class="game-card floating-box" data-delay="4">
+          <canvas class="game-icon-canvas" id="icon-random" width="48" height="48"></canvas>
+          <h3>RANDOM NUMBER</h3>
+          <p>GENERATE A RANDOM NUMBER BETWEEN ANY MIN AND MAX. QUICK AND SIMPLE.</p>
+        </a>
+        <a href="converter.html" class="game-card floating-box" data-delay="5">
+          <canvas class="game-icon-canvas" id="icon-converter" width="48" height="48"></canvas>
+          <h3>UNIT CONVERTER</h3>
+          <p>CONVERT LENGTH, WEIGHT, TEMP, SPEED, VOLUME, AREA, AND TIME INSTANTLY.</p>
+        </a>
+        <a href="coindice.html" class="game-card floating-box" data-delay="6">
+          <canvas class="game-icon-canvas" id="icon-coindice" width="48" height="48"></canvas>
+          <h3>COIN & DICE</h3>
+          <p>FLIP A COIN OR ROLL DICE. D4, D6, D8, D10, D12, D20, D100. ROLL UP TO 20 AT ONCE.</p>
+        </a>
+      </div>
+    </section>
   </main>
 
   <section class="about-section">
@@ -75,6 +87,6 @@
   <!-- Floating mystery boxes that spawn randomly -->
   <div id="floating-boxes-container"></div>
 
-  <script src="script.js"></script>
+  <script src="script.js?v=7"></script>
 </body>
 </html>
