@@ -553,8 +553,8 @@
     for (const k of [...activeChunks.keys()]) deactivateChunk(k);
     chunks.clear();
     Object.assign(player, { x: 0, z: 0, mass: 22, dead: false, score: 0, mouth: 0, dashT: 0, dashCd: 0, dashMult: 0, dirx: 0, dirz: -1, faceYaw: 0, roll: 0, guard: 0 });
-    // in a party, scatter the spawn and grant brief invulnerability so players don't pile up at the origin and instantly eat each other
-    if (partyMode) { const a = Math.random() * 6.28, dd = 260 + Math.random() * 340;
+    // in a party, spawn near the centre (so everyone can see each other) with brief invulnerability so nobody insta-eats
+    if (partyMode) { const a = Math.random() * 6.28, dd = Math.random() * 90;
       player.x = Math.cos(a) * dd; player.z = Math.sin(a) * dd; player.guard = 3; }
     player.r = radiusFromMass(player.mass); player.mesh.visible = true;
     for (const a of ais) scene.remove(a.mesh); ais.length = 0;
