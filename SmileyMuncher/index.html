@@ -650,7 +650,7 @@
     if (ax === 0 && az === 0 && joy.active) { ax = joy.x; az = joy.y; }
     if (ax === 0 && az === 0 && mouse.active && !isTouch()) { ax = mouse.x - W / 2; az = mouse.y - H / 2;
       if (Math.hypot(ax, az) < 12) { ax = 0; az = 0; } }
-    let speed = 260 / (1 + player.r * 0.012);
+    let speed = Math.min(660, 200 + player.r * 2.6);   // bigger = faster
     if (player.dashT > 0) { speed *= (player.dashMult || DASH_MULT); player.dashT -= dt; }
     player.dashCd = Math.max(0, player.dashCd - dt);
     const px0 = player.x, pz0 = player.z;
@@ -676,7 +676,7 @@
       else if (prey) { tx = prey.x; tz = prey.z; if (pd < 150 && a.dashCd <= 0 && Math.random() < 0.05) doDash(a); }
       else if (a.target) { tx = a.target.x; tz = a.target.z; }
       else { a.wobble += dt; tx = a.x + Math.cos(a.wobble) * 120; tz = a.z + Math.sin(a.wobble * 0.7) * 120; }
-      let aspeed = 250 / (1 + a.r * 0.012); if (a.dashT > 0) { aspeed *= (a.dashMult || DASH_MULT); a.dashT -= dt; }
+      let aspeed = Math.min(640, 195 + a.r * 2.6); if (a.dashT > 0) { aspeed *= (a.dashMult || DASH_MULT); a.dashT -= dt; }
       moveFacing(a, tx - a.x, tz - a.z, aspeed, dt);
       a.r = radiusFromMass(a.mass); resolveProps(a); a.mouth *= 0.9; eatFoodAround(a, false);
       if (Math.hypot(a.x - player.x, a.z - player.z) > AI_RANGE * 1.4) spawnAI(a, true);
