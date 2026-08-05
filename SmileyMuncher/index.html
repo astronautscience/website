@@ -993,20 +993,32 @@
     for (const id of [...remotes.keys()]) removeRemote(id);
     lobbyPeers.clear();
     player.name = pickName();                     // give each party member a distinct name
-    const room = T.joinRoom({ appId: 'smiley-muncher-3d-party' }, code);
+    const room = T.joinRoom({
+      appId: 'smiley-muncher-3d-party',
+      // STUN + public TURN relays so players behind home routers can still connect
+      rtcConfig: { iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:global.stun.twilio.com:3478' },
+        { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+        { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+        { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+      ] }
+    }, code);
     const [sendState, getState] = room.makeAction('st');
     const [sendEat, getEat] = room.makeAction('eat');
     const [sendGo, getGo] = room.makeAction('go');
     const [sendHi, getHi] = room.makeAction('hi');
     const [sendMsg, getMsg] = room.makeAction('msg');
-    net = { room, sendState, sendEat, sendGo, sendHi, sendMsg, code, host, started: false };
+    net = { room, sendState, sendEat, sendGo, sendHi, sendMsg, code, host, started: false, peers: new Set() };
     getMsg(d => addChatLine(d.n, d.t));
     room.onPeerJoin(id => {
+      net.peers.add(id);
       sendHi(player.name, id);                     // introduce myself to the new peer
       if (net.host && net.started) sendGo(1, id);  // late joiner: tell them the game already started
-      updateLobby();
+      updateLobby(); updatePartyCount();
     });
-    room.onPeerLeave(id => { lobbyPeers.delete(id); removeRemote(id); updateLobby(); updatePartyCount(); });
+    room.onPeerLeave(id => { net.peers.delete(id); lobbyPeers.delete(id); removeRemote(id); updateLobby(); updatePartyCount(); });
     getState((d, id) => { upsertRemote(id, d); updatePartyCount(); });
     getEat(d => {
       if (d.by !== T.selfId || player.dead || (player.guard || 0) > 0) return;   // no gains while spawn-protected
@@ -1058,8 +1070,8 @@
     document.getElementById('overlay').classList.remove('hidden');
   }
   function updatePartyCount() {
-    const n = 1 + remotes.size;
-    document.getElementById('partyPlayers').textContent = n + (n === 1 ? ' player' : ' players');
+    const n = 1 + (net && net.peers ? net.peers.size : remotes.size);
+    document.getElementById('partyPlayers').textContent = n + (n === 1 ? ' player — waiting for friends…' : ' players connected');
   }
 
   // ---------- state ----------
