@@ -68,6 +68,13 @@
   #lobby.hidden { display: none; }
   #lobbyCode { font-size: 46px; font-weight: 800; letter-spacing: 10px; color: #ffd93d; margin: 4px 0; text-shadow: 0 4px 14px rgba(255,217,61,.35); }
   #lobbyPlayers b { color: #ffd93d; }
+  #chat { position: fixed; left: 14px; bottom: 56px; width: 260px; max-width: 46vw; z-index: 4; }
+  #chatLog { display: flex; flex-direction: column; justify-content: flex-end; max-height: 150px; overflow: hidden;
+    font-size: 12px; color: #fff; text-shadow: 0 1px 3px #000; margin-bottom: 6px; }
+  #chatLog div { padding: 1px 0; line-height: 1.35; }
+  #chatLog b { color: #ffd93d; }
+  #chatInput { width: 100%; font-size: 13px; color: #fff; background: rgba(20,28,44,.7);
+    border: 1px solid rgba(255,255,255,.18); border-radius: 8px; padding: 6px 8px; outline: none; }
 </style>
 </head>
 <body>
@@ -88,6 +95,11 @@
 
 <div id="joy"><div id="knob"></div></div>
 <button id="dashBtn">DASH</button>
+
+<div id="chat" style="display:none">
+  <div id="chatLog"></div>
+  <input id="chatInput" maxlength="120" placeholder="Press Enter to chat…" autocomplete="off" spellcheck="false">
+</div>
 
 <div id="overlay">
   <div class="card">
@@ -130,7 +142,7 @@
   // ---------- constants ----------
   const BLOCK = 44, CHUNK = 20, CHUNK_PX = BLOCK * CHUNK;
   const AI_COUNT = 14, AI_RANGE = CHUNK_PX * 2.6;
-  const DASH_COST = 0.045, DASH_TIME = 0.22, DASH_CD = 1.5, DASH_MULT = 2.7, MIN_MASS = 18;
+  const DASH_COST = 0.045, DASH_TIME = 0.6, DASH_CD = 1.4, DASH_MULT = 2.7, MIN_MASS = 18;
 
   const canvas = document.getElementById('game');
   const fx = document.getElementById('fx'), fxc = fx.getContext('2d');
@@ -144,7 +156,7 @@
   renderer.outputEncoding = THREE.sRGBEncoding;
   const scene = new THREE.Scene();
   const SKY_HORIZON = 0xbfd6ee;
-  scene.fog = new THREE.Fog(SKY_HORIZON, 900, 3200);
+  // (fog removed)
 
   // sky gradient background
   scene.background = (() => {
@@ -550,9 +562,17 @@
   const mouse = { x: 0, y: 0, active: false }, keys = {}, joy = { active: false, x: 0, y: 0 };
   const isTouch = () => matchMedia('(pointer: coarse)').matches;
   canvas.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; });
-  window.addEventListener('keydown', e => { const k = e.key.toLowerCase(); keys[k] = true;
+  const chatInput = document.getElementById('chatInput');
+  window.addEventListener('keydown', e => {
+    if (partyMode && e.key === 'Enter') {              // Enter opens chat / sends message
+      if (document.activeElement === chatInput) { sendChat(); chatInput.blur(); }
+      else chatInput.focus();
+      e.preventDefault(); return;
+    }
+    if (document.activeElement === chatInput) return;  // don't drive the game while typing
+    const k = e.key.toLowerCase(); keys[k] = true;
     if (k === ' ') { e.preventDefault(); doDash(player); } if (k === 'm') muted = !muted; });
-  window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+  window.addEventListener('keyup', e => { if (document.activeElement === chatInput) return; keys[e.key.toLowerCase()] = false; });
   const joyEl = document.getElementById('joy'), knobEl = document.getElementById('knob');
   let joyId = null, joyBaseX = 0, joyBaseY = 0;
   canvas.addEventListener('touchstart', e => { for (const t of e.changedTouches) if (joyId === null) {
@@ -975,7 +995,9 @@
     const [sendEat, getEat] = room.makeAction('eat');
     const [sendGo, getGo] = room.makeAction('go');
     const [sendHi, getHi] = room.makeAction('hi');
-    net = { room, sendState, sendEat, sendGo, sendHi, code, host, started: false };
+    const [sendMsg, getMsg] = room.makeAction('msg');
+    net = { room, sendState, sendEat, sendGo, sendHi, sendMsg, code, host, started: false };
+    getMsg(d => addChatLine(d.n, d.t));
     room.onPeerJoin(id => {
       sendHi(player.name, id);                     // introduce myself to the new peer
       if (net.host && net.started) sendGo(1, id);  // late joiner: tell them the game already started
@@ -1000,7 +1022,23 @@
     if (net) net.started = true;
     document.getElementById('lobby').classList.add('hidden');
     document.getElementById('party').style.display = 'block';
+    document.getElementById('chatLog').innerHTML = '';
+    document.getElementById('chat').style.display = 'block';
     beginGame(true);
+  }
+  function addChatLine(name, text) {
+    const log = document.getElementById('chatLog');
+    const div = document.createElement('div');
+    div.innerHTML = '<b>' + String(name).slice(0, 16).replace(/</g, '&lt;') + ':</b> ' + String(text).slice(0, 120).replace(/</g, '&lt;');
+    log.appendChild(div);
+    while (log.children.length > 8) log.removeChild(log.firstChild);
+  }
+  function sendChat() {
+    const inp = document.getElementById('chatInput'), text = (inp.value || '').trim();
+    if (!text || !net) { inp.value = ''; return; }
+    net.sendMsg({ n: player.name, t: text });
+    addChatLine(player.name + ' (you)', text);
+    inp.value = '';
   }
   function leaveParty() {
     if (net) { try { net.room.leave(); } catch (e) {} net = null; }
@@ -1008,6 +1046,7 @@
     lobbyPeers.clear();
     document.getElementById('lobby').classList.add('hidden');
     document.getElementById('party').style.display = 'none';
+    document.getElementById('chat').style.display = 'none';
     document.getElementById('overlay').classList.remove('hidden');
   }
   function updatePartyCount() {
@@ -1024,6 +1063,7 @@
     if (net) { try { net.room.leave(); } catch (e) {} net = null; }
     for (const id of [...remotes.keys()]) removeRemote(id);
     document.getElementById('party').style.display = 'none';
+    document.getElementById('chat').style.display = 'none';
     beginGame(false);
   }
   function endGame() { running = false;
