@@ -594,7 +594,7 @@
   function doDash(ent) {
     if (ent.dead || ent.dashCd > 0 || ent.mass < MIN_MASS + 4) return;
     // sprint scales with size: bigger smileys get a stronger, longer burst
-    ent.dashMult = Math.min(7, DASH_MULT + ent.r * 0.03);
+    ent.dashMult = Math.min(4.5, DASH_MULT + ent.r * 0.015);
     ent.dashT = DASH_TIME * (1 + ent.r * 0.006);
     ent.dashCd = DASH_CD; ent.mass = Math.max(MIN_MASS, ent.mass * (1 - DASH_COST));
     if (ent.isPlayer) { initAudio(); sDash(); }
@@ -673,7 +673,7 @@
     if (ax === 0 && az === 0 && joy.active) { ax = joy.x; az = joy.y; }
     if (ax === 0 && az === 0 && mouse.active && !isTouch()) { ax = mouse.x - W / 2; az = mouse.y - H / 2;
       if (Math.hypot(ax, az) < 12) { ax = 0; az = 0; } }
-    let speed = Math.min(660, 200 + player.r * 2.6);   // bigger = faster
+    let speed = Math.min(330, 150 + player.r * 1.0);   // bigger = a bit faster (tamed)
     if (player.dashT > 0) { speed *= (player.dashMult || DASH_MULT); player.dashT -= dt; }
     player.dashCd = Math.max(0, player.dashCd - dt);
     const px0 = player.x, pz0 = player.z;
@@ -699,7 +699,7 @@
       else if (prey) { tx = prey.x; tz = prey.z; if (pd < 150 && a.dashCd <= 0 && Math.random() < 0.05) doDash(a); }
       else if (a.target) { tx = a.target.x; tz = a.target.z; }
       else { a.wobble += dt; tx = a.x + Math.cos(a.wobble) * 120; tz = a.z + Math.sin(a.wobble * 0.7) * 120; }
-      let aspeed = Math.min(640, 195 + a.r * 2.6); if (a.dashT > 0) { aspeed *= (a.dashMult || DASH_MULT); a.dashT -= dt; }
+      let aspeed = Math.min(320, 145 + a.r * 1.0); if (a.dashT > 0) { aspeed *= (a.dashMult || DASH_MULT); a.dashT -= dt; }
       moveFacing(a, tx - a.x, tz - a.z, aspeed, dt);
       a.r = radiusFromMass(a.mass); resolveProps(a); a.mouth *= 0.9; eatFoodAround(a, false);
       if (Math.hypot(a.x - player.x, a.z - player.z) > AI_RANGE * 1.4) spawnAI(a, true);
