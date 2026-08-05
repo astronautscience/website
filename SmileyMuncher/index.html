@@ -63,6 +63,11 @@
     color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.6); display: none; }
   #party b { color: #ffd93d; font-size: 22px; letter-spacing: 4px; }
   #party .sub { font-size: 12px; opacity: .7; }
+  #lobby { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 50% 40%, rgba(30,42,66,.9), rgba(10,14,22,.96)); z-index: 11; text-align: center; color: #fff; }
+  #lobby.hidden { display: none; }
+  #lobbyCode { font-size: 46px; font-weight: 800; letter-spacing: 10px; color: #ffd93d; margin: 4px 0; text-shadow: 0 4px 14px rgba(255,217,61,.35); }
+  #lobbyPlayers b { color: #ffd93d; }
 </style>
 </head>
 <body>
@@ -100,6 +105,19 @@
     </div>
     <div class="keys">Steer: mouse / WASD / arrows &nbsp;·&nbsp; Dash: Space<br>On touch: drag joystick, tap DASH</div>
     <div id="err">Couldn't load the 3D engine (needs an internet connection the first time). Reconnect and reload.</div>
+  </div>
+</div>
+
+<div id="lobby" class="hidden">
+  <div class="card">
+    <div class="smiley-title">🎉</div>
+    <h1>Party Lobby</h1>
+    <p style="margin:8px 0 4px">Share this code so friends can join:</p>
+    <div id="lobbyCode">····</div>
+    <div id="lobbyPlayers" class="keys" style="margin-top:6px"></div>
+    <button id="startBtn" style="margin-top:18px">Start Game</button>
+    <div id="lobbyWait" class="keys" style="display:none;margin-top:14px">Waiting for the host to start the game…</div>
+    <button id="leaveBtn" class="alt" style="margin-top:12px">Leave</button>
   </div>
 </div>
 
@@ -552,7 +570,10 @@
   dashBtn.addEventListener('touchstart', e => { e.preventDefault(); doDash(player); }, { passive: false });
   function doDash(ent) {
     if (ent.dead || ent.dashCd > 0 || ent.mass < MIN_MASS + 4) return;
-    ent.dashT = DASH_TIME; ent.dashCd = DASH_CD; ent.mass = Math.max(MIN_MASS, ent.mass * (1 - DASH_COST));
+    // sprint scales with size: bigger smileys get a stronger, longer burst
+    ent.dashMult = Math.min(7, DASH_MULT + ent.r * 0.03);
+    ent.dashT = DASH_TIME * (1 + ent.r * 0.006);
+    ent.dashCd = DASH_CD; ent.mass = Math.max(MIN_MASS, ent.mass * (1 - DASH_COST));
     if (ent.isPlayer) { initAudio(); sDash(); }
   }
 
@@ -630,7 +651,7 @@
     if (ax === 0 && az === 0 && mouse.active && !isTouch()) { ax = mouse.x - W / 2; az = mouse.y - H / 2;
       if (Math.hypot(ax, az) < 12) { ax = 0; az = 0; } }
     let speed = 260 / (1 + player.r * 0.012);
-    if (player.dashT > 0) { speed *= DASH_MULT; player.dashT -= dt; }
+    if (player.dashT > 0) { speed *= (player.dashMult || DASH_MULT); player.dashT -= dt; }
     player.dashCd = Math.max(0, player.dashCd - dt);
     const px0 = player.x, pz0 = player.z;
     moveFacing(player, ax, az, speed, dt);
@@ -655,7 +676,7 @@
       else if (prey) { tx = prey.x; tz = prey.z; if (pd < 150 && a.dashCd <= 0 && Math.random() < 0.05) doDash(a); }
       else if (a.target) { tx = a.target.x; tz = a.target.z; }
       else { a.wobble += dt; tx = a.x + Math.cos(a.wobble) * 120; tz = a.z + Math.sin(a.wobble * 0.7) * 120; }
-      let aspeed = 250 / (1 + a.r * 0.012); if (a.dashT > 0) { aspeed *= DASH_MULT; a.dashT -= dt; }
+      let aspeed = 250 / (1 + a.r * 0.012); if (a.dashT > 0) { aspeed *= (a.dashMult || DASH_MULT); a.dashT -= dt; }
       moveFacing(a, tx - a.x, tz - a.z, aspeed, dt);
       a.r = radiusFromMass(a.mass); resolveProps(a); a.mouth *= 0.9; eatFoodAround(a, false);
       if (Math.hypot(a.x - player.x, a.z - player.z) > AI_RANGE * 1.4) spawnAI(a, true);
@@ -910,6 +931,7 @@
   // ---------- multiplayer (Trystero WebRTC, party code = room id) ----------
   let net = null, partyMode = false, netAcc = 0;
   const remotes = new Map();
+  const lobbyPeers = new Map();   // id -> name, for the pre-game lobby roster
 
   function syncRemote(rem, dt) {
     if (!rem.mesh) return;
@@ -942,26 +964,60 @@
   function genCode() { const s = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c = '';
     for (let i = 0; i < 4; i++) c += s[(Math.random() * s.length) | 0]; return c; }
 
-  function startParty(code) {
+  function startParty(code, host) {
     const T = window.Trystero; if (!T) return false;
     if (net) { try { net.room.leave(); } catch (e) {} }
     for (const id of [...remotes.keys()]) removeRemote(id);
+    lobbyPeers.clear();
+    player.name = pickName();                     // give each party member a distinct name
     const room = T.joinRoom({ appId: 'smiley-muncher-3d-party' }, code);
     const [sendState, getState] = room.makeAction('st');
     const [sendEat, getEat] = room.makeAction('eat');
-    net = { room, sendState, sendEat, code };
-    room.onPeerJoin(() => updatePartyCount());
-    room.onPeerLeave(id => { removeRemote(id); updatePartyCount(); });
+    const [sendGo, getGo] = room.makeAction('go');
+    const [sendHi, getHi] = room.makeAction('hi');
+    net = { room, sendState, sendEat, sendGo, sendHi, code, host, started: false };
+    room.onPeerJoin(id => {
+      sendHi(player.name, id);                     // introduce myself to the new peer
+      if (net.host && net.started) sendGo(1, id);  // late joiner: tell them the game already started
+      updateLobby();
+    });
+    room.onPeerLeave(id => { lobbyPeers.delete(id); removeRemote(id); updateLobby(); updatePartyCount(); });
     getState((d, id) => { upsertRemote(id, d); updatePartyCount(); });
-    getEat((d) => { if (d.by === T.selfId) { player.mass += d.mass * 0.8; player.mouth = 1; sChomp(); } });
+    getEat(d => { if (d.by === T.selfId) { player.mass += d.mass * 0.8; player.mouth = 1; sChomp(); } });
+    getGo(() => { if (net && !net.started) beginParty(); });
+    getHi((name, id) => { lobbyPeers.set(id, name); updateLobby(); });
+
+    // open the lobby (game doesn't start until the host presses Start)
+    document.getElementById('overlay').classList.add('hidden');
+    document.getElementById('lobbyCode').textContent = code;
     document.getElementById('partyCode').textContent = code;
-    document.getElementById('party').style.display = 'block';
-    updatePartyCount();
+    document.getElementById('startBtn').style.display = host ? 'inline-block' : 'none';
+    document.getElementById('lobbyWait').style.display = host ? 'none' : 'block';
+    document.getElementById('lobby').classList.remove('hidden');
+    updateLobby();
     return true;
+  }
+  function updateLobby() {
+    const names = [player.name + ' (you)', ...lobbyPeers.values()];
+    document.getElementById('lobbyPlayers').innerHTML = '<b>' + names.length + ' in party</b><br>' + names.join(' &middot; ');
+  }
+  function beginParty() {
+    if (net) net.started = true;
+    document.getElementById('lobby').classList.add('hidden');
+    document.getElementById('party').style.display = 'block';
+    beginGame(true);
+  }
+  function leaveParty() {
+    if (net) { try { net.room.leave(); } catch (e) {} net = null; }
+    for (const id of [...remotes.keys()]) removeRemote(id);
+    lobbyPeers.clear();
+    document.getElementById('lobby').classList.add('hidden');
+    document.getElementById('party').style.display = 'none';
+    document.getElementById('overlay').classList.remove('hidden');
   }
   function updatePartyCount() {
     const n = 1 + remotes.size;
-    document.getElementById('partyPlayers').textContent = n + (n === 1 ? ' player — waiting…' : ' players');
+    document.getElementById('partyPlayers').textContent = n + (n === 1 ? ' player' : ' players');
   }
 
   // ---------- state ----------
@@ -983,14 +1039,16 @@
 
   document.getElementById('playBtn').addEventListener('click', startSolo);
   document.getElementById('createBtn').addEventListener('click', () => {
-    if (!window.Trystero) return; if (startParty(genCode())) beginGame(true);
+    if (!window.Trystero) return; startParty(genCode(), true);
   });
   document.getElementById('joinBtn').addEventListener('click', () => {
     if (!window.Trystero) return;
     const code = (document.getElementById('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (code.length < 3) { document.getElementById('codeInput').focus(); return; }
-    if (startParty(code)) beginGame(true);
+    startParty(code, false);
   });
+  document.getElementById('startBtn').addEventListener('click', () => { if (net) net.sendGo(1); beginParty(); });
+  document.getElementById('leaveBtn').addEventListener('click', leaveParty);
   function netReady() {
     const s = document.getElementById('netStatus');
     if (window.Trystero) { s.textContent = 'Multiplayer ready — create a party or join with a code'; s.classList.add('on'); }
