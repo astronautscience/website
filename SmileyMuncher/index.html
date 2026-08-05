@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Smiley Muncher 3D</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #0e1420; }
+  body { font-family: -apple-system, system-ui, sans-serif; touch-action: none; -webkit-user-select: none; user-select: none; }
+  #game, #fx { display: block; position: fixed; inset: 0; width: 100vw; height: 100vh; }
+  #fx { pointer-events: none; z-index: 2; }
+  .hud { position: fixed; color: #fff; pointer-events: none; text-shadow: 0 2px 8px rgba(0,0,0,.6); z-index: 3; }
+  #topLeft { top: 12px; left: 14px; font-size: 14px; line-height: 1.5; }
+  #topLeft b { color: #ffd93d; }
+  #score { font-size: 24px; font-weight: 800; color: #ffd93d; }
+  .dim { opacity: .55; font-size: 12px; }
+  #stage { font-size: 13px; opacity: .8; }
+  #board { position: fixed; top: 12px; right: 14px; width: 178px; background: rgba(20,28,44,.72);
+    border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 9px 11px; color: #fff; font-size: 13px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.4); pointer-events: none; z-index: 3; }
+  #board h3 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; opacity: .6; margin-bottom: 6px; }
+  .row { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; line-height: 1.35; }
+  .row .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .sz { opacity: .7; font-variant-numeric: tabular-nums; }
+  .row.me { color: #ffd93d; font-weight: 700; }
+  .row .rk { opacity: .45; width: 16px; display: inline-block; }
+  #hint { bottom: 14px; left: 50%; transform: translateX(-50%); font-size: 12px; opacity: .5; text-align: center; z-index: 3; }
+  #mini { position: fixed; right: 14px; bottom: 14px; width: 130px; height: 130px; border-radius: 12px;
+    background: rgba(20,28,44,.75); border: 1px solid rgba(255,255,255,.12); box-shadow: 0 6px 20px rgba(0,0,0,.4); z-index: 3; }
+  #joy { position: fixed; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.15); display: none; z-index: 5; pointer-events: none; }
+  #knob { position: absolute; width: 52px; height: 52px; border-radius: 50%; background: rgba(255,217,61,.75);
+    left: 34px; top: 34px; box-shadow: 0 2px 10px rgba(0,0,0,.4); }
+  #dashBtn { position: fixed; right: 22px; bottom: 158px; width: 74px; height: 74px; border-radius: 50%;
+    background: rgba(255,107,107,.85); color: #fff; font-weight: 800; font-size: 14px; border: none; display: none;
+    z-index: 6; box-shadow: 0 4px 14px rgba(0,0,0,.4); }
+  #dashBtn:active { transform: scale(.94); }
+  #dashBtn.cool { opacity: .35; }
+  #overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 50% 40%, rgba(30,42,66,.85), rgba(10,14,22,.95)); z-index: 10; text-align: center; color: #fff; }
+  #overlay.hidden { display: none; }
+  .card { background: rgba(18,26,42,.9); padding: 32px 38px; border-radius: 20px; border: 1px solid rgba(255,255,255,.1);
+    box-shadow: 0 20px 60px rgba(0,0,0,.5); max-width: 460px; }
+  .card h1 { font-size: 32px; margin-bottom: 4px; }
+  .smiley-title { font-size: 52px; }
+  .card p { opacity: .82; font-size: 15px; line-height: 1.6; margin: 12px 0 22px; }
+  .card button { font-size: 18px; font-weight: 700; color: #1a1200; background: #ffd93d; border: none;
+    border-radius: 999px; padding: 13px 34px; cursor: pointer; box-shadow: 0 6px 18px rgba(255,217,61,.35); transition: transform .1s; }
+  .card button:active { transform: scale(.96); }
+  .keys { font-size: 13px; opacity: .6; margin-top: 16px; line-height: 1.7; }
+  #err { color: #ff9f9f; font-size: 13px; margin-top: 14px; display: none; }
+  #partyBox { margin-top: 18px; border-top: 1px solid rgba(255,255,255,.12); padding-top: 16px; }
+  button.alt { font-size: 15px; font-weight: 700; color: #fff; background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.18); border-radius: 999px; padding: 10px 22px; cursor: pointer; }
+  button.alt:active { transform: scale(.96); }
+  .joinrow { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
+  #codeInput { width: 120px; font-size: 18px; font-weight: 800; letter-spacing: 3px; text-align: center; text-transform: uppercase;
+    color: #ffd93d; background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.2); border-radius: 12px; padding: 8px; outline: none; }
+  #netStatus { font-size: 12px; opacity: .65; margin-top: 10px; }
+  #netStatus.on { color: #6ee7a0; opacity: .9; }
+  #party { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 3; text-align: center;
+    color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.6); display: none; }
+  #party b { color: #ffd93d; font-size: 22px; letter-spacing: 4px; }
+  #party .sub { font-size: 12px; opacity: .7; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<canvas id="fx"></canvas>
+
+<div id="topLeft" class="hud">
+  <div>Score <span id="score">0</span></div>
+  <div>Size <b id="size">0</b> · Rank <b id="rank">–</b></div>
+  <div id="stage">🌱 nibbling crops</div>
+  <div class="dim">pos <span id="coord">0, 0</span> · <span id="biome">–</span> · chunks <span id="chunks">0</span></div>
+</div>
+
+<div id="party"><div class="sub">PARTY CODE — share it!</div><b id="partyCode">····</b><div class="sub" id="partyPlayers">1 player</div></div>
+<div id="board" class="hud"><h3>Leaderboard</h3><div id="boardRows"></div></div>
+<div id="hint" class="hud">move: mouse / WASD · <b>dash: Space</b> · eat anything smaller than you · M: mute</div>
+<canvas id="mini"></canvas>
+
+<div id="joy"><div id="knob"></div></div>
+<button id="dashBtn">DASH</button>
+
+<div id="overlay">
+  <div class="card">
+    <div class="smiley-title">🙂</div>
+    <h1>Smiley Muncher <span style="opacity:.5;font-size:20px">3D</span></h1>
+    <p id="subtitle">Roll across an endless world of farms, suburbs, cities and oceans. Start tiny — eat people, crops and cars — then grow big enough to swallow houses, barns and whole skyscrapers. Anything bigger than you is solid: bonk off it until you're big enough. Biggest smiley wears the 👑.</p>
+    <button id="playBtn">Play Solo</button>
+    <div id="partyBox">
+      <button id="createBtn" class="alt">Create Party</button>
+      <div class="joinrow">
+        <input id="codeInput" maxlength="5" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button id="joinBtn" class="alt">Join</button>
+      </div>
+      <div id="netStatus">Multiplayer: connecting…</div>
+    </div>
+    <div class="keys">Steer: mouse / WASD / arrows &nbsp;·&nbsp; Dash: Space<br>On touch: drag joystick, tap DASH</div>
+    <div id="err">Couldn't load the 3D engine (needs an internet connection the first time). Reconnect and reload.</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  "use strict";
+  if (typeof THREE === 'undefined') { document.getElementById('err').style.display = 'block'; return; }
+
+  // ---------- constants ----------
+  const BLOCK = 44, CHUNK = 20, CHUNK_PX = BLOCK * CHUNK;
+  const AI_COUNT = 14, AI_RANGE = CHUNK_PX * 2.6;
+  const DASH_COST = 0.045, DASH_TIME = 0.22, DASH_CD = 1.5, DASH_MULT = 2.7, MIN_MASS = 18;
+
+  const canvas = document.getElementById('game');
+  const fx = document.getElementById('fx'), fxc = fx.getContext('2d');
+  const mini = document.getElementById('mini'), mctx = mini.getContext('2d');
+  let W = 0, H = 0, DPR = 1;
+
+  // ---------- renderer / scene ----------
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  const scene = new THREE.Scene();
+  const SKY_HORIZON = 0xbfd6ee;
+  scene.fog = new THREE.Fog(SKY_HORIZON, 900, 3200);
+
+  // sky gradient background
+  scene.background = (() => {
+    const c = document.createElement('canvas'); c.width = 8; c.height = 256;
+    const g = c.getContext('2d'), grd = g.createLinearGradient(0, 0, 0, 256);
+    grd.addColorStop(0, '#4f8fd6'); grd.addColorStop(0.55, '#8fbbe6'); grd.addColorStop(1, '#cfe3f4');
+    g.fillStyle = grd; g.fillRect(0, 0, 8, 256);
+    return new THREE.CanvasTexture(c);
+  })();
+
+  const camera = new THREE.PerspectiveCamera(55, 1, 1, 7000);
+
+  scene.add(new THREE.HemisphereLight(0xdcebff, 0x55503f, 0.75));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.18));
+  const sun = new THREE.DirectionalLight(0xfff2d8, 1.05);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.bias = -0.0006;
+  const sunTarget = new THREE.Object3D(); scene.add(sunTarget); sun.target = sunTarget;
+  scene.add(sun);
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    renderer.setPixelRatio(DPR); renderer.setSize(W, H, false);
+    camera.aspect = W / H; camera.updateProjectionMatrix();
+    fx.width = W * DPR; fx.height = H * DPR; fxc.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const ms = 130; mini.width = ms * DPR; mini.height = ms * DPR; mctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+
+  // distant haze floor (beyond streamed chunks)
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(7000, 7000),
+    new THREE.MeshStandardMaterial({ color: 0x7f9a63, roughness: 1 }));
+  ground.rotation.x = -Math.PI / 2; ground.position.y = -0.6; ground.receiveShadow = true; scene.add(ground);
+
+  // ---------- seeded RNG + biome noise ----------
+  function mulberry32(a) { return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }; }
+  function seedFor(cx, cy) {
+    let h = 2166136261 ^ (cx * 374761393) ^ (cy * 668265263);
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return (h ^ (h >>> 16)) >>> 0;
+  }
+  function vnoise(x, y, salt) {
+    const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+    const r = (ix, iy) => (seedFor(ix + salt, iy - salt) % 10000) / 10000;
+    const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+    const a = r(xi, yi), b = r(xi + 1, yi), c = r(xi, yi + 1), d = r(xi + 1, yi + 1);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  }
+  function biomeAt(cx, cy) {
+    if (vnoise(cx * 0.11, cy * 0.11, 0) < 0.34) return 'ocean';
+    const d = vnoise((cx + 55) * 0.16, (cy - 33) * 0.16, 777);
+    if (d > 0.63) return 'city';
+    if (d > 0.44) return 'suburb';
+    return 'farm';
+  }
+
+  // ---------- textures ----------
+  function cvs(sz) { const c = document.createElement('canvas'); c.width = c.height = sz; return c; }
+  const windowTex = (() => {
+    const c = cvs(64), g = c.getContext('2d'); g.fillStyle = '#5b6a82'; g.fillRect(0, 0, 64, 64);
+    for (let y = 5; y < 60; y += 9) for (let x = 5; x < 60; x += 9) {
+      g.fillStyle = (seedFor(x, y) % 4) ? '#c9d6e8' : '#8ea6c4'; g.fillRect(x, y, 6, 6);
+    }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3, 8); return t;
+  })();
+  function cityTex() {
+    const c = cvs(256), g = c.getContext('2d');
+    g.fillStyle = '#565f6e'; g.fillRect(0, 0, 256, 256);           // asphalt
+    g.fillStyle = '#6f7a4f';                                       // lots (grass/concrete)
+    for (let a = 0; a < 4; a++) for (let b = 0; b < 4; b++) g.fillRect(14 + a * 60, 14 + b * 60, 46, 46);
+    g.strokeStyle = '#e8e15a'; g.setLineDash([8, 10]); g.lineWidth = 2;   // road centre lines
+    for (let i = 1; i < 4; i++) { g.beginPath(); g.moveTo(i * 60 + 4, 0); g.lineTo(i * 60 + 4, 256); g.stroke();
+      g.beginPath(); g.moveTo(0, i * 60 + 4); g.lineTo(256, i * 60 + 4); g.stroke(); }
+    const t = new THREE.CanvasTexture(c); return t;
+  }
+  function suburbTex() {
+    const c = cvs(256), g = c.getContext('2d');
+    g.fillStyle = '#5c8145'; g.fillRect(0, 0, 256, 256);          // grass
+    g.fillStyle = '#8b8f83';                                       // roads
+    g.fillRect(122, 0, 14, 256); g.fillRect(0, 122, 256, 14);
+    g.strokeStyle = '#d9dede'; g.lineWidth = 2;                    // sidewalks
+    for (const p of [116, 138]) { g.beginPath(); g.moveTo(p, 0); g.lineTo(p, 256); g.stroke(); }
+    for (const p of [116, 138]) { g.beginPath(); g.moveTo(0, p); g.lineTo(256, p); g.stroke(); }
+    const t = new THREE.CanvasTexture(c); return t;
+  }
+  function farmTex() {
+    const c = cvs(256), g = c.getContext('2d');
+    const cols = ['#6b9a3c', '#7fae45', '#b79a4e', '#5f8a37'];
+    for (let i = 0; i < 8; i++) { g.fillStyle = cols[i % cols.length]; g.fillRect(0, i * 32, 256, 32); }
+    g.strokeStyle = 'rgba(60,50,30,0.25)'; g.lineWidth = 1;         // furrows
+    for (let x = 0; x < 256; x += 6) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 256); g.stroke(); }
+    const t = new THREE.CanvasTexture(c); return t;
+  }
+  function waterTex() {
+    const c = cvs(128), g = c.getContext('2d');
+    g.fillStyle = '#2f74d0'; g.fillRect(0, 0, 128, 128);
+    g.strokeStyle = 'rgba(200,225,255,0.35)'; g.lineWidth = 2;
+    for (let y = 6; y < 128; y += 14) { g.beginPath(); for (let x = 0; x <= 128; x += 8) g.lineTo(x, y + Math.sin(x * 0.2 + y) * 3); g.stroke(); }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(4, 4); return t;
+  }
+  const TILE_TEX = { city: cityTex(), suburb: suburbTex(), farm: farmTex(), ocean: waterTex() };
+
+  // ---------- shared geometry / materials ----------
+  const G = {
+    box: new THREE.BoxGeometry(1, 1, 1),
+    cyl: new THREE.CylinderGeometry(1, 1, 1, 14),
+    pyr: new THREE.ConeGeometry(1, 1, 4),
+    cone: new THREE.ConeGeometry(1, 1, 9),
+    sph: new THREE.SphereGeometry(1, 12, 10),
+    plane: new THREE.PlaneGeometry(1, 1)
+  };
+  const std = (o) => new THREE.MeshStandardMaterial(o);
+  const M = {
+    build: [std({ map: windowTex, color: 0x9fb0cc }), std({ map: windowTex, color: 0xb9c4d4 }),
+            std({ map: windowTex, color: 0x8493ad }), std({ map: windowTex, color: 0xa7a2b4 })],
+    roofFlat: std({ color: 0x3a3f49, roughness: .9 }),
+    wall: [std({ color: 0xe4d3ad, roughness: .85 }), std({ color: 0xd9b48c, roughness: .85 }),
+           std({ color: 0xc7d2d6, roughness: .85 }), std({ color: 0xcf9e86, roughness: .85 })],
+    roof: [std({ color: 0xb0392b, roughness: .8 }), std({ color: 0x5a6b7a, roughness: .8 }), std({ color: 0x6b4a2b, roughness: .8 })],
+    trunk: std({ color: 0x6b4a2b, roughness: .95 }),
+    leaf: [std({ color: 0x2f7a37, roughness: 1 }), std({ color: 0x3f9147, roughness: 1 }), std({ color: 0x4f7a2e, roughness: 1 })],
+    barn: std({ color: 0x9c3b2e, roughness: .85 }), barnRoof: std({ color: 0x6b3220 }),
+    silo: std({ color: 0xc2c9d0, metalness: .5, roughness: .35 }),
+    hay: std({ color: 0xd9b45a, roughness: 1 }),
+    crop: [std({ color: 0x4c8f3a }), std({ color: 0x6fae3d }), std({ color: 0xcaa93e })],
+    car: [std({ color: 0xd94f4f, roughness: .5, metalness: .3 }), std({ color: 0x4d9dff, roughness: .5, metalness: .3 }),
+          std({ color: 0xf0d24a, roughness: .5, metalness: .3 }), std({ color: 0xe8e8ee, roughness: .5, metalness: .3 }),
+          std({ color: 0x5ac07f, roughness: .5, metalness: .3 })],
+    glass: std({ color: 0x22303f, roughness: .15, metalness: .5 }),
+    tyre: std({ color: 0x181818 }),
+    boat: std({ color: 0x8a5230, roughness: .8 }), cabin: std({ color: 0xf2f2f2 }),
+    skin: [std({ color: 0xf2c8a0 }), std({ color: 0xd6a06a }), std({ color: 0x9c6a42 })],
+    shirt: [std({ color: 0xff6b6b }), std({ color: 0x4d9dff }), std({ color: 0x5ac07f }), std({ color: 0xffd93d }), std({ color: 0xc86bff }), std({ color: 0xeeeeee })],
+    pants: [std({ color: 0x33415c }), std({ color: 0x5a4632 }), std({ color: 0x2c2c2c })],
+    water: std({ map: TILE_TEX.ocean, color: 0x2f74d0, roughness: .2, metalness: .2, transparent: true, opacity: .85 }),
+    tile: {
+      city: std({ map: TILE_TEX.city, roughness: 1 }), suburb: std({ map: TILE_TEX.suburb, roughness: 1 }),
+      farm: std({ map: TILE_TEX.farm, roughness: 1 }), ocean: std({ color: 0x123049, roughness: 1 })
+    }
+  };
+  const R = arr => arr[(Math.random() * arr.length) | 0];
+
+  // ---------- prop catalog (accurate relative proportions) ----------
+  // r = eat radius (how big you must be to swallow it). box props store bw/bd footprint, round props store cr.
+  const CAT = {
+    person: { r: 3,  cr: 2.4 },
+    crop:   { r: 4,  cr: 5 },
+    hay:    { r: 5,  cr: 7 },
+    car:    { r: 9,  bw: 9,  bd: 20 },
+    tree:   { r: 12, cr: 12 },
+    boat:   { r: 13, bw: 16, bd: 48 },
+    house:  { r: 22, bw: 40, bd: 40 },
+    silo:   { r: 16, cr: 11 },
+    barn:   { r: 30, bw: 58, bd: 78 },
+    windmill: { r: 24, cr: 8 }
+    // building computed per-instance
+  };
+
+  // ---------- chunk streaming ----------
+  const chunks = new Map();
+  const chunkKey = (cx, cy) => cx + ',' + cy;
+  const worldToChunk = v => Math.floor(v / CHUNK_PX);
+
+  function makeChunk(cx, cy) {
+    const rand = mulberry32(seedFor(cx, cy)), props = [], biome = biomeAt(cx, cy);
+    const x0 = cx * CHUNK_PX, z0 = cy * CHUNK_PX;
+    const add = (kind, x, z, extra) => {
+      const base = CAT[kind] || {};
+      const p = Object.assign({ kind, x, z, cx, cy, r: base.r, cr: base.cr, bw: base.bw, bd: base.bd,
+        value: Math.max(.6, (base.r || 8) * (base.r || 8) * 0.06), ci: (rand() * 6) | 0, mesh: null,
+        phase: rand() * 6.28, ang: rand() * 6.28, spd: 0 }, extra);
+      if (kind === 'person') p.spd = 9 + rand() * 8;
+      else if (kind === 'car') p.spd = 34 + rand() * 50;
+      props.push(p);
+    };
+    const jit = (n) => (rand() - 0.5) * n;
+    const spot = () => [x0 + rand() * CHUNK_PX, z0 + rand() * CHUNK_PX];
+
+    if (biome === 'ocean') {
+      const n = 3 + (rand() * 4 | 0);
+      for (let i = 0; i < n; i++) { const [x, z] = spot(); add('boat', x, z, { rot: rand() * Math.PI }); }
+    } else if (biome === 'city') {
+      const cell = CHUNK_PX / 4;
+      for (let gx = 0; gx < 4; gx++) for (let gz = 0; gz < 4; gz++) {
+        if (rand() < 0.12) continue;
+        const w = 46 + rand() * 46, h = 60 + rand() * 300, r = Math.max(w * 0.5, h * 0.16);
+        add('building', x0 + gx * cell + cell / 2 + jit(10), z0 + gz * cell + cell / 2 + jit(10),
+          { w, h, r, bw: w, bd: w, value: Math.max(30, r * r * 0.05) });
+      }
+      for (let i = 0; i < 6; i++) { const [x, z] = spot(); add('car', x, z, { rot: (rand() < .5 ? 0 : Math.PI / 2) }); }
+      for (let i = 0; i < 10; i++) { const [x, z] = spot(); add('person', x, z); }
+    } else if (biome === 'suburb') {
+      const cell = CHUNK_PX / 4;
+      for (let gx = 0; gx < 4; gx++) for (let gz = 0; gz < 4; gz++) {
+        const x = x0 + gx * cell + cell / 2 + jit(24), z = z0 + gz * cell + cell / 2 + jit(24), r2 = rand();
+        if (r2 < 0.5) add('house', x, z, { ci: (rand() * 4) | 0, rci: (rand() * 3) | 0 });
+        else if (r2 < 0.8) add('tree', x, z, { ci: (rand() * 3) | 0, ts: 0.8 + rand() * 0.5 });
+      }
+      for (let i = 0; i < 4; i++) { const [x, z] = spot(); add('car', x, z, { rot: (rand() < .5 ? 0 : Math.PI / 2) }); }
+      for (let i = 0; i < 6; i++) { const [x, z] = spot(); add('person', x, z); }
+    } else { // farm
+      const rows = 6;
+      for (let gx = 0; gx < rows; gx++) for (let gz = 0; gz < rows; gz++) {
+        if (rand() < 0.22) continue;
+        add('crop', x0 + (gx + .5) / rows * CHUNK_PX + jit(16), z0 + (gz + .5) / rows * CHUNK_PX + jit(16), { ci: (rand() * 3) | 0 });
+      }
+      if (rand() < 0.8) { const [x, z] = spot(); add('barn', x, z, { rot: rand() * Math.PI }); }
+      if (rand() < 0.45) { const [x, z] = spot(); add('windmill', x, z); }
+      const silos = rand() * 3 | 0; for (let i = 0; i < silos; i++) { const [x, z] = spot(); add('silo', x, z); }
+      for (let i = 0; i < 5; i++) { const [x, z] = spot(); add('hay', x, z, { rot: rand() * Math.PI }); }
+      for (let i = 0; i < 3; i++) { const [x, z] = spot(); add('tree', x, z, { ci: (rand() * 3) | 0, ts: 0.9 + rand() * 0.5 }); }
+      for (let i = 0; i < 2; i++) { const [x, z] = spot(); add('person', x, z); }
+    }
+    return { biome, foods: props, active: false, group: null };
+  }
+  function getChunk(cx, cy) {
+    const k = chunkKey(cx, cy); let c = chunks.get(k);
+    if (!c) { c = makeChunk(cx, cy); chunks.set(k, c); } return c;
+  }
+
+  // ---------- prop mesh builders ----------
+  function part(geo, mat) { const m = new THREE.Mesh(geo, mat); m.castShadow = true; return m; }
+  function buildProp(p) {
+    const g = new THREE.Group();
+    switch (p.kind) {
+      case 'building': {
+        const b = part(G.box, M.build[p.ci % M.build.length]); b.scale.set(p.w, p.h, p.w); b.position.y = p.h / 2; g.add(b);
+        const cap = part(G.box, M.roofFlat); cap.scale.set(p.w * 1.02, 4, p.w * 1.02); cap.position.y = p.h + 2; g.add(cap);
+        const box2 = part(G.box, M.roofFlat); box2.scale.set(p.w * 0.3, 10, p.w * 0.3); box2.position.y = p.h + 7; g.add(box2);
+        break; }
+      case 'house': {
+        const wall = part(G.box, M.wall[p.ci % M.wall.length]); wall.scale.set(40, 26, 40); wall.position.y = 13; g.add(wall);
+        const roof = part(G.pyr, M.roof[p.rci % M.roof.length]); roof.scale.set(36, 20, 36); roof.rotation.y = Math.PI / 4; roof.position.y = 36; g.add(roof);
+        const door = part(G.box, M.trunk); door.scale.set(7, 12, 1); door.position.set(0, 6, 20.2); g.add(door);
+        break; }
+      case 'tree': {
+        const s = p.ts || 1;
+        const t = part(G.cyl, M.trunk); t.scale.set(4 * s, 20 * s, 4 * s); t.position.y = 10 * s; g.add(t);
+        const lm = M.leaf[p.ci % M.leaf.length];
+        for (const o of [[0, 30, 0, 15], [-8, 26, 5, 11], [7, 28, -6, 10], [3, 36, 4, 9]]) {
+          const l = part(G.sph, lm); l.scale.setScalar(o[3] * s); l.position.set(o[0] * s, o[1] * s, o[2] * s); g.add(l);
+        }
+        break; }
+      case 'barn': {
+        const b = part(G.box, M.barn); b.scale.set(58, 34, 78); b.position.y = 17; g.add(b);
+        const roof = part(G.pyr, M.barnRoof); roof.scale.set(66, 20, 86); roof.rotation.y = Math.PI / 4; roof.position.y = 44; g.add(roof);
+        g.rotation.y = p.rot || 0; break; }
+      case 'silo': {
+        const s = part(G.cyl, M.silo); s.scale.set(11, 60, 11); s.position.y = 30; g.add(s);
+        const d = part(G.sph, M.silo); d.scale.set(11, 8, 11); d.position.y = 60; g.add(d); break; }
+      case 'hay': {
+        const h = part(G.cyl, M.hay); h.scale.set(7, 15, 7); h.rotation.z = Math.PI / 2; h.position.y = 7; g.add(h);
+        g.rotation.y = p.rot || 0; break; }
+      case 'crop': {
+        const lm = M.crop[p.ci % M.crop.length];
+        for (const o of [[0, 0], [-3, 3], [3, -2], [2, 3]]) { const c = part(G.cone, lm); c.scale.set(3, 9, 3); c.position.set(o[0], 5, o[1]); g.add(c); }
+        break; }
+      case 'car': {
+        const body = part(G.box, M.car[p.ci % M.car.length]); body.scale.set(9, 6, 20); body.position.y = 5; g.add(body);
+        const cab = part(G.box, M.glass); cab.scale.set(8, 6, 10); cab.position.set(0, 10.5, -1); g.add(cab);
+        for (const o of [[-4.5, 6], [4.5, 6], [-4.5, -6], [4.5, -6]]) {
+          const w = part(G.cyl, M.tyre); w.scale.set(2.4, 2.4, 2.4); w.rotation.z = Math.PI / 2; w.position.set(o[0], 2.4, o[1]); g.add(w); }
+        g.rotation.y = p.rot || 0; break; }
+      case 'boat': {
+        const hull = part(G.box, M.boat); hull.scale.set(16, 10, 46); hull.position.y = 5; g.add(hull);
+        const bow = part(G.pyr, M.boat); bow.scale.set(16, 10, 14); bow.rotation.x = -Math.PI / 2; bow.rotation.y = Math.PI / 4; bow.position.set(0, 5, 30); g.add(bow);
+        const cab = part(G.box, M.cabin); cab.scale.set(11, 11, 16); cab.position.set(0, 15, -4); g.add(cab);
+        g.rotation.y = p.rot || 0; break; }
+      case 'person': {
+        const pant = R(M.pants), shirt = R(M.shirt), skin = R(M.skin);
+        const mkLimb = (sx, y, mat, len) => { const grp = new THREE.Group(); grp.position.set(sx, y, 0);
+          const seg = part(G.box, mat); seg.scale.set(1.5, len, 1.8); seg.position.y = -len / 2; grp.add(seg); return grp; };
+        const legL = mkLimb(-1, 4.6, pant, 4.6), legR = mkLimb(1, 4.6, pant, 4.6);
+        const armL = mkLimb(-2.6, 9.4, shirt, 4.2), armR = mkLimb(2.6, 9.4, shirt, 4.2);
+        g.add(legL); g.add(legR); g.add(armL); g.add(armR);
+        const torso = part(G.box, shirt); torso.scale.set(4, 5, 2.6); torso.position.y = 7.3; g.add(torso);
+        const head = part(G.sph, skin); head.scale.setScalar(1.7); head.position.y = 11.2; g.add(head);
+        g.userData = { legL, legR, armL, armR }; break; }
+      case 'windmill': {
+        const pole = part(G.cyl, M.wall[2]); pole.scale.set(3.4, 60, 3.4); pole.position.y = 30; g.add(pole);
+        const cap = part(G.box, M.barn); cap.scale.set(7, 8, 9); cap.position.set(0, 60, 2); g.add(cap);
+        const hub = new THREE.Group(); hub.position.set(0, 60, 6);
+        for (let i = 0; i < 4; i++) { const bg = new THREE.Group(); bg.rotation.z = i * Math.PI / 2;
+          const blade = part(G.box, M.wall[0]); blade.scale.set(3, 24, 1.4); blade.position.y = 13; bg.add(blade); hub.add(bg); }
+        g.add(hub); g.userData = { blades: hub }; break; }
+    }
+    g.position.set(p.x, p.kind === 'boat' ? 2 : 0, p.z);
+    return g;
+  }
+
+  const activeChunks = new Map();
+  function activateChunk(cx, cy) {
+    const k = chunkKey(cx, cy); if (activeChunks.has(k)) return;
+    const c = getChunk(cx, cy), grp = new THREE.Group();
+    const cxp = cx * CHUNK_PX + CHUNK_PX / 2, czp = cy * CHUNK_PX + CHUNK_PX / 2;
+    const tile = new THREE.Mesh(G.plane, M.tile[c.biome]); tile.rotation.x = -Math.PI / 2;
+    tile.scale.set(CHUNK_PX, CHUNK_PX, 1); tile.position.set(cxp, 0.05, czp); tile.receiveShadow = true; grp.add(tile);
+    if (c.biome === 'ocean') {
+      const water = new THREE.Mesh(G.plane, M.water); water.rotation.x = -Math.PI / 2;
+      water.scale.set(CHUNK_PX, CHUNK_PX, 1); water.position.set(cxp, 5, czp); grp.add(water);
+    }
+    for (const f of c.foods) if (!f.mesh) { f.mesh = buildProp(f); grp.add(f.mesh); }
+    scene.add(grp); c.group = grp; c.active = true; activeChunks.set(k, c);
+  }
+  function deactivateChunk(k) {
+    const c = activeChunks.get(k); if (!c) return;
+    if (c.group) scene.remove(c.group);
+    for (const f of c.foods) f.mesh = null;
+    c.group = null; c.active = false; activeChunks.delete(k);
+  }
+  function streamChunks() {
+    const cr = Math.min(4, 2 + Math.ceil(player.r / 26));
+    const pcx = worldToChunk(player.x), pcy = worldToChunk(player.z), need = new Set();
+    for (let dy = -cr; dy <= cr; dy++) for (let dx = -cr; dx <= cr; dx++) {
+      const k = chunkKey(pcx + dx, pcy + dy); need.add(k); activateChunk(pcx + dx, pcy + dy);
+    }
+    for (const k of [...activeChunks.keys()]) if (!need.has(k)) deactivateChunk(k);
+  }
+
+  // ---------- audio ----------
+  let actx = null, muted = false, lastEatSound = 0;
+  function initAudio() { if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } }
+  function blip(freq, dur, type, vol, slideTo) {
+    if (!actx || muted) return;
+    const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime;
+    o.type = type || 'sine'; o.frequency.setValueAtTime(freq, t);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+    g.gain.setValueAtTime(vol || 0.05, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur);
+  }
+  const sEat = v => { const n = performance.now(); if (n - lastEatSound > 45) { lastEatSound = n; blip(520 + v * 8, 0.08, 'triangle', 0.04); } };
+  const sChomp = () => blip(170, 0.2, 'square', 0.09, 80);
+  const sDash = () => blip(700, 0.16, 'sawtooth', 0.05, 240);
+  const sBonk = () => blip(120, 0.09, 'square', 0.05, 70);
+  const sDie = () => blip(300, 0.5, 'sawtooth', 0.08, 60);
+
+  // ---------- smiley ----------
+  const bodyGeo = new THREE.SphereGeometry(1, 28, 22);
+  const eyeGeo = new THREE.SphereGeometry(0.15, 12, 12), glGeo = new THREE.SphereGeometry(0.06, 8, 8);
+  const eyeMat = new THREE.MeshBasicMaterial({ color: 0x20140a }), glMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const mouthMat = new THREE.MeshBasicMaterial({ color: 0x7a1e0e }), mouthGeo = new THREE.SphereGeometry(1, 14, 12);
+  function buildSmiley(hex) {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(bodyGeo, std({ color: hex, roughness: 0.4 })); body.castShadow = true; g.add(body);
+    const eyes = [];
+    for (const s of [-1, 1]) {
+      const e = new THREE.Mesh(eyeGeo, eyeMat); e.position.set(0.33 * s, 0.26, 0.9); g.add(e); eyes.push(e);
+      const gl = new THREE.Mesh(glGeo, glMat); gl.position.set(0.28 * s, 0.33, 0.98); g.add(gl);
+    }
+    const mouth = new THREE.Mesh(mouthGeo, mouthMat); mouth.position.set(0, -0.18, 0.9); mouth.scale.set(0.42, 0.16, 0.14);
+    g.add(mouth); g.userData = { mouth, body, eyes }; scene.add(g); return g;
+  }
+  const crown = (() => {
+    const g = new THREE.Group();
+    const gold = std({ color: 0xffd93d, roughness: 0.25, metalness: 0.85, emissive: 0x4a3700, emissiveIntensity: 0.4 });
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.22, 18, 1, true), gold); band.castShadow = true; g.add(band);
+    for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2;
+      const sp = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.34, 8), gold); sp.castShadow = true;
+      sp.position.set(Math.cos(a) * 0.42, 0.24, Math.sin(a) * 0.42); g.add(sp); }
+    g.visible = false; return g;
+  })();
+  scene.add(crown);
+
+  // ---------- entities ----------
+  const radiusFromMass = m => Math.sqrt(m) * 3.4;
+  const NAMES = ['Grin','Chomp','Nom','Beam','Munchy','Giggles','Cheeks','Sunny','Toothy','Waffles',
+                 'Pip','Bubbles','Gobble','Smirk','Dimple','Chuckles','Snacky','Biscuit','Wink','Zippy'];
+  const pickName = () => NAMES[(Math.random() * NAMES.length) | 0] + (Math.random() < .3 ? (Math.random() * 90 + 10 | 0) : '');
+  const player = { x: 0, z: 0, mass: 22, colorHex: 0xffd93d, name: 'You', isPlayer: true,
+    mouth: 0, dirx: 0, dirz: -1, faceYaw: 0, roll: 0, dead: false, score: 0, dashT: 0, dashCd: 0 };
+  player.r = radiusFromMass(player.mass); player.mesh = buildSmiley(player.colorHex);
+
+  const AI_HEX = [0xff6b6b, 0x4d9dff, 0x4dd4ac, 0xc86bff, 0xff9f43, 0x5ef0c8, 0xff5db1, 0x7d8cff];
+  const ais = [];
+  function spawnAI(a, near) {
+    const ang = Math.random() * Math.PI * 2;
+    const dist = near ? (AI_RANGE * 0.7 + Math.random() * AI_RANGE * 0.25) : Math.random() * AI_RANGE;
+    a.x = player.x + Math.cos(ang) * dist; a.z = player.z + Math.sin(ang) * dist;
+    a.mass = 12 + Math.random() * Math.max(18, player.mass * 0.9);
+    a.name = pickName(); a.dirx = 0; a.dirz = -1; a.faceYaw = 0; a.roll = 0; a.mouth = 0;
+    a.target = null; a.retargetIn = 0; a.wobble = Math.random() * 6; a.dashCd = 0; a.dashT = 0;
+    a.r = radiusFromMass(a.mass); return a;
+  }
+  function makeAI() { const hex = AI_HEX[(Math.random() * AI_HEX.length) | 0];
+    return spawnAI({ isPlayer: false, colorHex: hex, mesh: buildSmiley(hex) }, false); }
+  function resetGame() {
+    for (const k of [...activeChunks.keys()]) deactivateChunk(k);
+    chunks.clear();
+    Object.assign(player, { x: 0, z: 0, mass: 22, dead: false, score: 0, mouth: 0, dashT: 0, dashCd: 0, dirx: 0, dirz: -1, faceYaw: 0, roll: 0, guard: 0 });
+    player.r = radiusFromMass(player.mass); player.mesh.visible = true;
+    for (const a of ais) scene.remove(a.mesh); ais.length = 0;
+    if (!partyMode) for (let i = 0; i < AI_COUNT; i++) ais.push(makeAI());  // no bots in a party — real players instead
+  }
+
+  // ---------- input ----------
+  const mouse = { x: 0, y: 0, active: false }, keys = {}, joy = { active: false, x: 0, y: 0 };
+  const isTouch = () => matchMedia('(pointer: coarse)').matches;
+  canvas.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; });
+  window.addEventListener('keydown', e => { const k = e.key.toLowerCase(); keys[k] = true;
+    if (k === ' ') { e.preventDefault(); doDash(player); } if (k === 'm') muted = !muted; });
+  window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+  const joyEl = document.getElementById('joy'), knobEl = document.getElementById('knob');
+  let joyId = null, joyBaseX = 0, joyBaseY = 0;
+  canvas.addEventListener('touchstart', e => { for (const t of e.changedTouches) if (joyId === null) {
+    joyId = t.identifier; joyBaseX = t.clientX; joyBaseY = t.clientY;
+    joyEl.style.left = (joyBaseX - 60) + 'px'; joyEl.style.top = (joyBaseY - 60) + 'px';
+    joyEl.style.display = 'block'; joy.active = true; knobEl.style.left = '34px'; knobEl.style.top = '34px'; } }, { passive: true });
+  canvas.addEventListener('touchmove', e => { for (const t of e.changedTouches) if (t.identifier === joyId) {
+    let dx = t.clientX - joyBaseX, dy = t.clientY - joyBaseY; const mag = Math.hypot(dx, dy), max = 46, cl = Math.min(mag, max);
+    const nx = mag ? dx / mag : 0, ny = mag ? dy / mag : 0; joy.x = nx * (cl / max); joy.y = ny * (cl / max);
+    knobEl.style.left = (34 + nx * cl) + 'px'; knobEl.style.top = (34 + ny * cl) + 'px'; } }, { passive: true });
+  function endTouch(e) { for (const t of e.changedTouches) if (t.identifier === joyId) {
+    joyId = null; joy.active = false; joy.x = 0; joy.y = 0; joyEl.style.display = 'none'; } }
+  canvas.addEventListener('touchend', endTouch); canvas.addEventListener('touchcancel', endTouch);
+  const dashBtn = document.getElementById('dashBtn');
+  dashBtn.addEventListener('touchstart', e => { e.preventDefault(); doDash(player); }, { passive: false });
+  function doDash(ent) {
+    if (ent.dead || ent.dashCd > 0 || ent.mass < MIN_MASS + 4) return;
+    ent.dashT = DASH_TIME; ent.dashCd = DASH_CD; ent.mass = Math.max(MIN_MASS, ent.mass * (1 - DASH_COST));
+    if (ent.isPlayer) { initAudio(); sDash(); }
+  }
+
+  // ---------- eating + collision ----------
+  function eatFoodAround(ent, gainScore) {
+    const cx = worldToChunk(ent.x), cy = worldToChunk(ent.z); let ate = 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const f = getChunk(cx + dx, cy + dy).foods;
+      for (let i = f.length - 1; i >= 0; i--) {
+        const food = f[i], ddx = food.x - ent.x, ddz = food.z - ent.z;
+        if (ent.r > food.r && ddx*ddx + ddz*ddz < (ent.r + food.r * 0.4) ** 2) {
+          ent.mass += food.value; ent.mouth = Math.min(1, ent.mouth + 0.5);
+          if (food.mesh && food.mesh.parent) food.mesh.parent.remove(food.mesh); food.mesh = null;
+          f.splice(i, 1); ate += food.value; if (gainScore) ent.score += Math.round(food.value * 4);
+          if (gainScore) emitBurst(food.x, (food.r || 4) + 4, food.z, food.r);
+        }
+      }
+    }
+    return ate;
+  }
+  function nearestFood(ent) {
+    const cx = worldToChunk(ent.x), cy = worldToChunk(ent.z); let best = null, bd = Infinity;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const f = getChunk(cx + dx, cy + dy).foods;
+      for (let i = 0; i < f.length; i++) { if (f[i].r >= ent.r) continue;
+        const ddx = f[i].x - ent.x, ddz = f[i].z - ent.z, d = ddx*ddx + ddz*ddz; if (d < bd) { bd = d; best = f[i]; } }
+    }
+    return best;
+  }
+  // solid: push entity out of anything too big to eat (box footprint or circle)
+  function resolveProps(ent) {
+    const cx = worldToChunk(ent.x), cy = worldToChunk(ent.z); let hit = false;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const f = getChunk(cx + dx, cy + dy).foods;
+      for (let i = 0; i < f.length; i++) {
+        const p = f[i]; if (ent.r > p.r) continue;
+        let ddx = ent.x - p.x, ddz = ent.z - p.z;
+        if (p.bw != null) {                       // box (rotated in 90° steps only)
+          let hx = p.bw / 2, hz = p.bd / 2;
+          if (p.rot && Math.abs(Math.sin(p.rot)) > 0.7) { const t = hx; hx = hz; hz = t; }
+          const qx = Math.max(-hx, Math.min(hx, ddx)), qz = Math.max(-hz, Math.min(hz, ddz));
+          let nx = ddx - qx, nz = ddz - qz, d = Math.hypot(nx, nz);
+          if (d > 1e-4) { if (d < ent.r) { const pu = ent.r - d; ent.x += nx / d * pu; ent.z += nz / d * pu; hit = true; } }
+          else { const px = hx - Math.abs(ddx), pz = hz - Math.abs(ddz);
+            if (px < pz) ent.x += (ddx < 0 ? -1 : 1) * (px + ent.r); else ent.z += (ddz < 0 ? -1 : 1) * (pz + ent.r); hit = true; }
+        } else {                                   // circle
+          const min = ent.r + (p.cr || p.r), d = Math.hypot(ddx, ddz);
+          if (d < min) { let dd = d; if (dd < 1e-3) { ddx = 1; ddz = 0; dd = 1e-3; }
+            const pu = min - dd; ent.x += ddx / dd * pu; ent.z += ddz / dd * pu; hit = true; }
+        }
+      }
+    }
+    return hit;
+  }
+
+  let leader = player;
+
+  // ---------- update ----------
+  function moveFacing(ent, ax, az, spd, dt) {
+    const mag = Math.hypot(ax, az);
+    if (mag > 0.0001) { ax /= mag; az /= mag;
+      ent.x += ax * spd * dt; ent.z += az * spd * dt;
+      ent.dirx += (ax - ent.dirx) * 0.2; ent.dirz += (az - ent.dirz) * 0.2;
+      ent.roll += spd * dt / Math.max(6, ent.r);
+    }
+  }
+  function update(dt) {
+    if (player.dead) return;
+    let ax = 0, az = 0;
+    if (keys['w'] || keys['arrowup']) az -= 1;
+    if (keys['s'] || keys['arrowdown']) az += 1;
+    if (keys['a'] || keys['arrowleft']) ax -= 1;
+    if (keys['d'] || keys['arrowright']) ax += 1;
+    if (ax === 0 && az === 0 && joy.active) { ax = joy.x; az = joy.y; }
+    if (ax === 0 && az === 0 && mouse.active && !isTouch()) { ax = mouse.x - W / 2; az = mouse.y - H / 2;
+      if (Math.hypot(ax, az) < 12) { ax = 0; az = 0; } }
+    let speed = 260 / (1 + player.r * 0.012);
+    if (player.dashT > 0) { speed *= DASH_MULT; player.dashT -= dt; }
+    player.dashCd = Math.max(0, player.dashCd - dt);
+    const px0 = player.x, pz0 = player.z;
+    moveFacing(player, ax, az, speed, dt);
+    player.r = radiusFromMass(player.mass); player.mouth *= 0.9;
+    if (resolveProps(player) && (ax || az) && Math.hypot(player.x - px0, player.z - pz0) < speed * dt * 0.4) {
+      if (performance.now() - lastBonk > 200) { lastBonk = performance.now(); sBonk(); }
+    }
+    if (eatFoodAround(player, true) > 0) sEat(player.r);
+    player.score = Math.max(player.score, Math.round(player.mass * 3));
+
+    for (const a of ais) {
+      a.dashCd = Math.max(0, a.dashCd - dt); a.retargetIn -= dt;
+      if (!a.target || a.retargetIn <= 0) { a.target = nearestFood(a); a.retargetIn = 0.4 + Math.random() * 0.6; }
+      let threat = null, prey = null, td = Infinity, pd = Infinity;
+      for (const o of ais) if (o !== a) { const d = Math.hypot(o.x - a.x, o.z - a.z);
+        if (d < 280) { if (o.r > a.r * 1.03 && d < td) { td = d; threat = o; } else if (a.r > o.r * 1.03 && d < pd) { pd = d; prey = o; } } }
+      const pdist = Math.hypot(player.x - a.x, player.z - a.z);
+      if (!player.dead && pdist < 320) { if (player.r > a.r * 1.03 && pdist < td) { threat = player; td = pdist; }
+        else if (a.r > player.r * 1.03 && pdist < pd) { prey = player; pd = pdist; } }
+      let tx, tz;
+      if (threat) { tx = a.x - (threat.x - a.x); tz = a.z - (threat.z - a.z); if (td < 130 && a.dashCd <= 0 && Math.random() < 0.04) doDash(a); }
+      else if (prey) { tx = prey.x; tz = prey.z; if (pd < 150 && a.dashCd <= 0 && Math.random() < 0.05) doDash(a); }
+      else if (a.target) { tx = a.target.x; tz = a.target.z; }
+      else { a.wobble += dt; tx = a.x + Math.cos(a.wobble) * 120; tz = a.z + Math.sin(a.wobble * 0.7) * 120; }
+      let aspeed = 250 / (1 + a.r * 0.012); if (a.dashT > 0) { aspeed *= DASH_MULT; a.dashT -= dt; }
+      moveFacing(a, tx - a.x, tz - a.z, aspeed, dt);
+      a.r = radiusFromMass(a.mass); resolveProps(a); a.mouth *= 0.9; eatFoodAround(a, false);
+      if (Math.hypot(a.x - player.x, a.z - player.z) > AI_RANGE * 1.4) spawnAI(a, true);
+    }
+
+    const all = [player, ...ais];
+    for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) {
+      const A = all[i], B = all[j]; if (A.dead || B.dead) continue;
+      const d = Math.hypot(A.x - B.x, A.z - B.z);
+      const big = A.r >= B.r ? A : B, small = A.r >= B.r ? B : A;
+      if (d < big.r * 0.8 && big.r > small.r) {          // bigger at all -> eat
+        big.mass += small.mass * 0.8; big.mouth = 1;
+        if (big.isPlayer || small.isPlayer) sChomp();
+        if (small.isPlayer) player.dead = true; else spawnAI(small, true);
+      } else if (big.r <= small.r * 1.02) {              // near-equal -> solid bump
+        const min = (A.r + B.r) * 0.82;
+        if (d < min) { const nd = d || 0.001, nx = (A.x - B.x) / nd, nz = (A.z - B.z) / nd, ov = (min - d) * 0.5;
+          A.x += nx * ov; A.z += nz * ov; B.x -= nx * ov; B.z -= nz * ov; }
+      }
+    }
+
+    // multiplayer: get eaten by a bigger real player (victim-authoritative), and broadcast state
+    if (partyMode && !player.dead) {
+      player.guard = Math.max(0, (player.guard || 0) - dt);
+      if (player.guard <= 0) {
+        for (const rem of remotes.values()) {
+          if (rem.dead) continue;
+          const d = Math.hypot(rem.x - player.x, rem.z - player.z);
+          if (rem.r > player.r && d < rem.r * 0.8) { getEatenBy(rem.id); break; }
+        }
+      }
+      netAcc += dt;
+      if (netAcc > 0.06 && net) { netAcc = 0;
+        net.sendState({ n: player.name, c: player.colorHex, x: player.x, z: player.z,
+          r: player.r, m: player.mass, mo: player.mouth, f: player.faceYaw, d: 0 }); }
+    }
+
+    leader = player;
+    for (const a of ais) if (a.r > leader.r) leader = a;
+    for (const rem of remotes.values()) if (!rem.dead && rem.r > leader.r) leader = rem;
+    if (player.dead && !partyMode) { sDie(); player.mesh.visible = false; endGame(); }
+    streamChunks();
+  }
+  let lastBonk = 0;
+
+  // ---------- render sync ----------
+  const UP = new THREE.Vector3(0, 1, 0), axis = new THREE.Vector3(), qz = new THREE.Quaternion(), qroll = new THREE.Quaternion();
+  function syncMesh(ent, dt) {
+    const m = ent.mesh;
+    ent.faceYaw += (Math.atan2(ent.dirx, ent.dirz) - ent.faceYaw) * 0.25;
+    m.position.set(ent.x, ent.r, ent.z);
+    m.scale.setScalar(ent.r);
+    // yaw to face travel + a little rolling tilt
+    qz.setFromAxisAngle(UP, ent.faceYaw);
+    axis.set(Math.cos(ent.faceYaw), 0, -Math.sin(ent.faceYaw));
+    qroll.setFromAxisAngle(axis, Math.sin(ent.roll) * 0.18);
+    m.quaternion.copy(qroll).multiply(qz);
+    const ud = m.userData, open = 0.16 + ent.mouth * 0.5;
+    ud.mouth.scale.set(0.42, open, 0.14); ud.mouth.position.y = -0.18 - open * 0.2;
+    // squash-and-stretch when chomping
+    const sq = 1 - ent.mouth * 0.14; ud.body.scale.set(1 / sq, sq, 1 / sq);
+    // blinking
+    if (ent.blinkT == null) ent.blinkT = 1 + Math.random() * 4;
+    ent.blinkT -= dt || 0;
+    let ey = 1; if (ent.blinkT < 0.12) ey = Math.max(0.08, Math.abs(ent.blinkT) / 0.12);
+    if (ent.blinkT <= 0) ent.blinkT = 2.5 + Math.random() * 4;
+    ud.eyes[0].scale.y = ey; ud.eyes[1].scale.y = ey;
+  }
+  const camPos = new THREE.Vector3(0, 200, 200);
+  function updateCamera() {
+    const D = 30 + player.r * 3.6, Hh = 26 + player.r * 3.4;
+    const tx = player.x, tz = player.z + D, ty = player.r + Hh;
+    camPos.x += (tx - camPos.x) * 0.08; camPos.y += (ty - camPos.y) * 0.08; camPos.z += (tz - camPos.z) * 0.08;
+    camera.position.copy(camPos); camera.lookAt(player.x, player.r, player.z);
+  }
+  function updateSun() {
+    const s = 300 + player.r * 3.4;
+    sun.position.set(player.x + s * 0.55, s * 1.5 + 180, player.z + s * 0.35);
+    sunTarget.position.set(player.x, 0, player.z);
+    const cm = sun.shadow.camera;
+    cm.left = -s; cm.right = s; cm.top = s; cm.bottom = -s; cm.near = 1; cm.far = s * 4 + 800; cm.updateProjectionMatrix();
+  }
+
+  // ---------- fx overlay ----------
+  const proj = new THREE.Vector3();
+  function drawArrow() {
+    fxc.clearRect(0, 0, W, H);
+    if (leader === player || player.dead) return;
+    proj.set(leader.x, leader.r * 2, leader.z).project(camera);
+    let sx = (proj.x * 0.5 + 0.5) * W, sy = (-proj.y * 0.5 + 0.5) * H;
+    const behind = proj.z > 1;
+    if (!behind && sx > 30 && sx < W - 30 && sy > 30 && sy < H - 30) return;
+    let dx = sx - W / 2, dy = sy - H / 2; if (behind) { dx = -dx; dy = -dy; }
+    const ang = Math.atan2(dy, dx), rad = Math.min(W, H) * 0.38;
+    const axp = W / 2 + Math.cos(ang) * rad, ayp = H / 2 + Math.sin(ang) * rad;
+    fxc.save(); fxc.translate(axp, ayp); fxc.rotate(ang);
+    fxc.fillStyle = '#ffd93d'; fxc.strokeStyle = 'rgba(0,0,0,.35)'; fxc.lineWidth = 2;
+    fxc.beginPath(); fxc.moveTo(20, 0); fxc.lineTo(-10, -13); fxc.lineTo(-10, 13); fxc.closePath(); fxc.fill(); fxc.stroke(); fxc.restore();
+    const dist = Math.round(Math.hypot(leader.x - player.x, leader.z - player.z) / BLOCK);
+    fxc.font = 'bold 12px system-ui'; fxc.textAlign = 'center'; fxc.fillStyle = '#ffd93d';
+    fxc.fillText('👑 ' + leader.name + '  ' + dist + ' blocks',
+      Math.max(70, Math.min(W - 70, axp)), Math.max(20, Math.min(H - 14, ayp + (Math.sin(ang) > 0 ? 26 : -18))));
+  }
+  function drawMinimap() {
+    const s = 130, scale = 0.016;
+    mctx.clearRect(0, 0, s, s); mctx.save(); mctx.translate(s / 2, s / 2);
+    for (const a of ais.concat([...remotes.values()])) { if (a.dead) continue;
+      const dx = (a.x - player.x) * scale, dy = (a.z - player.z) * scale;
+      if (Math.abs(dx) > s / 2 || Math.abs(dy) > s / 2) continue;
+      mctx.fillStyle = a === leader ? '#ffd93d' : (a.r > player.r ? '#ff6b6b' : '#' + a.colorHex.toString(16).padStart(6, '0'));
+      mctx.beginPath(); mctx.arc(dx, dy, Math.max(2, a.r * scale * 3), 0, Math.PI * 2); mctx.fill(); }
+    mctx.fillStyle = '#ffd93d'; mctx.beginPath(); mctx.arc(0, 0, Math.max(3, player.r * scale * 3), 0, Math.PI * 2); mctx.fill(); mctx.restore();
+  }
+  const boardRows = document.getElementById('boardRows');
+  const STAGES = [[9,'🌱 nibbling crops & people'],[13,'🚗 eating cars & trees'],[22,'🏡 swallowing houses'],[34,'🏭 gulping barns & silos'],[60,'🏙️ devouring skyscrapers'],[1e9,'🌆 unstoppable colossus']];
+  function updateHUD() {
+    document.getElementById('score').textContent = player.score;
+    document.getElementById('size').textContent = Math.round(player.r);
+    document.getElementById('chunks').textContent = chunks.size;
+    document.getElementById('coord').textContent = Math.round(player.x / BLOCK) + ', ' + Math.round(player.z / BLOCK);
+    document.getElementById('biome').textContent = biomeAt(worldToChunk(player.x), worldToChunk(player.z));
+    let st = STAGES[0][1]; for (const [thr, label] of STAGES) { if (player.r < thr) { st = label; break; } }
+    document.getElementById('stage').textContent = st;
+    const rivals = ais.concat([...remotes.values()].filter(r => !r.dead));
+    const bigger = rivals.filter(a => a.r > player.r).length;
+    document.getElementById('rank').textContent = player.dead ? '–' : '#' + (bigger + 1);
+    dashBtn.classList.toggle('cool', player.dashCd > 0);
+    const all = [player, ...rivals].sort((a, b) => b.r - a.r).slice(0, 8);
+    let html = '';
+    all.forEach((e, i) => { html += '<div class="row' + (e.isPlayer ? ' me' : '') + '">' +
+      '<span class="nm"><span class="rk">' + (i + 1) + '</span>' + (i === 0 ? '👑 ' : '') + e.name + '</span>' +
+      '<span class="sz">' + Math.round(e.r) + '</span></div>'; });
+    boardRows.innerHTML = html;
+  }
+
+  // ---------- animate world props (people walk, cars drive, trees sway, windmills spin, boats bob) ----------
+  function animateWorld(t, dt) {
+    for (const c of activeChunks.values()) {
+      for (const p of c.foods) {
+        const m = p.mesh; if (!m) continue;
+        if (p.kind === 'person') {
+          const MINX = p.cx * CHUNK_PX + 8, MAXX = MINX + CHUNK_PX - 16,
+            MINZ = p.cy * CHUNK_PX + 8, MAXZ = MINZ + CHUNK_PX - 16;
+          let nx = p.x + Math.cos(p.ang) * p.spd * dt, nz = p.z + Math.sin(p.ang) * p.spd * dt;
+          if (nx < MINX || nx > MAXX) p.ang = Math.PI - p.ang; else p.x = nx;
+          if (nz < MINZ || nz > MAXZ) p.ang = -p.ang; else p.z = nz;
+          p.phase += dt * 8;
+          m.position.set(p.x, Math.abs(Math.sin(p.phase)) * 0.7, p.z);
+          m.rotation.y = -p.ang + Math.PI / 2;
+          const sw = Math.sin(p.phase) * 0.6, ud = m.userData;
+          if (ud.legL) { ud.legL.rotation.x = sw; ud.legR.rotation.x = -sw; ud.armL.rotation.x = -sw * 0.8; ud.armR.rotation.x = sw * 0.8; }
+        } else if (p.kind === 'car') {
+          const dirx = Math.sin(p.rot || 0), dirz = Math.cos(p.rot || 0);
+          const MINX = p.cx * CHUNK_PX + 24, MAXX = MINX + CHUNK_PX - 48,
+            MINZ = p.cy * CHUNK_PX + 24, MAXZ = MINZ + CHUNK_PX - 48;
+          let nx = p.x + dirx * p.spd * dt, nz = p.z + dirz * p.spd * dt;
+          if (nx < MINX || nx > MAXX || nz < MINZ || nz > MAXZ) { p.rot = (p.rot || 0) + Math.PI; }
+          else { p.x = nx; p.z = nz; }
+          m.position.x = p.x; m.position.z = p.z; m.rotation.y = p.rot || 0;
+        } else if (p.kind === 'boat') {
+          p.phase += dt; m.position.y = 2 + Math.sin(p.phase * 1.6) * 1.6;
+          m.rotation.x = Math.sin(p.phase) * 0.05; m.rotation.z = Math.cos(p.phase * 1.3) * 0.05;
+        } else if (p.kind === 'tree') {
+          m.rotation.z = Math.sin(t * 1.6 + p.x * 0.05) * 0.035;
+        } else if (p.kind === 'windmill' && m.userData.blades) {
+          m.userData.blades.rotation.z += dt * 1.4;
+        }
+      }
+    }
+    TILE_TEX.ocean.offset.x = (t * 0.03) % 1; TILE_TEX.ocean.offset.y = (t * 0.02) % 1;
+  }
+
+  // ---------- clouds ----------
+  const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, transparent: true, opacity: 0.92 });
+  const clouds = [];
+  for (let i = 0; i < 16; i++) {
+    const g = new THREE.Group();
+    for (let j = 0; j < 4; j++) { const puff = new THREE.Mesh(G.sph, cloudMat);
+      puff.scale.set(60 + Math.random() * 50, 34 + Math.random() * 20, 55 + Math.random() * 40);
+      puff.position.set((Math.random() - 0.5) * 130, (Math.random() - 0.5) * 18, (Math.random() - 0.5) * 90); g.add(puff); }
+    g.userData = { wx: (Math.random() - 0.5) * 5000, wz: (Math.random() - 0.5) * 5000, y: 480 + Math.random() * 260, sp: 8 + Math.random() * 12 };
+    g.position.set(g.userData.wx, g.userData.y, g.userData.wz); scene.add(g); clouds.push(g);
+  }
+  function updateClouds(dt) {
+    for (const g of clouds) { const u = g.userData; u.wx += u.sp * dt;
+      if (u.wx - player.x > 2600) u.wx -= 5200; if (player.x - u.wx > 2600) u.wx += 5200;
+      if (u.wz - player.z > 2600) u.wz -= 5200; if (player.z - u.wz > 2600) u.wz += 5200;
+      g.position.set(u.wx, u.y, u.wz); }
+  }
+
+  // ---------- birds ----------
+  const birdMat = new THREE.MeshBasicMaterial({ color: 0x2a2f38 });
+  const birds = [];
+  for (let i = 0; i < 7; i++) {
+    const g = new THREE.Group();
+    const wl = new THREE.Mesh(G.box, birdMat); wl.scale.set(9, 0.6, 3); wl.position.x = -5;
+    const wr = new THREE.Mesh(G.box, birdMat); wr.scale.set(9, 0.6, 3); wr.position.x = 5;
+    g.add(wl); g.add(wr); g.userData = { wl, wr, ang: Math.random() * 6.28, rad: 160 + Math.random() * 260,
+      y: 220 + Math.random() * 160, sp: 0.25 + Math.random() * 0.25, flap: Math.random() * 6 };
+    scene.add(g); birds.push(g);
+  }
+  function updateBirds(dt) {
+    for (const g of birds) { const u = g.userData; u.ang += u.sp * dt; u.flap += dt * 10;
+      const x = player.x + Math.cos(u.ang) * u.rad, z = player.z + Math.sin(u.ang) * u.rad;
+      g.position.set(x, u.y + Math.sin(u.flap * 0.2) * 8, z); g.rotation.y = -u.ang;
+      const f = Math.sin(u.flap) * 0.6; u.wl.rotation.z = f; u.wr.rotation.z = -f; }
+  }
+
+  // ---------- eat particles ----------
+  const pMat = new THREE.MeshBasicMaterial({ color: 0xfff2b0 });
+  const POOL = [];
+  for (let i = 0; i < 80; i++) { const m = new THREE.Mesh(G.sph, pMat); m.visible = false; scene.add(m);
+    POOL.push({ m, life: 0, vx: 0, vy: 0, vz: 0, mx: 0, my: 0, mz: 0 }); }
+  let pIdx = 0;
+  function emitBurst(x, y, z, sz) {
+    const n = 5 + Math.min(8, (sz || 4) / 4);
+    for (let i = 0; i < n; i++) { const p = POOL[pIdx]; pIdx = (pIdx + 1) % POOL.length;
+      const a = Math.random() * 6.28, sp = 20 + Math.random() * 60;
+      p.life = 0.5 + Math.random() * 0.3; p.mx = x; p.my = y; p.mz = z;
+      p.vx = Math.cos(a) * sp; p.vz = Math.sin(a) * sp; p.vy = 30 + Math.random() * 50;
+      p.s0 = 1.5 + (sz || 4) * 0.15; p.m.visible = true; }
+  }
+  function updateParticles(dt) {
+    for (const p of POOL) { if (p.life <= 0) { if (p.m.visible) p.m.visible = false; continue; }
+      p.life -= dt; p.vy -= 160 * dt; p.mx += p.vx * dt; p.my += p.vy * dt; p.mz += p.vz * dt;
+      if (p.my < 0) { p.my = 0; p.vy *= -0.4; p.vx *= 0.7; p.vz *= 0.7; }
+      p.m.position.set(p.mx, p.my, p.mz); p.m.scale.setScalar(Math.max(0.01, p.s0 * p.life * 2)); }
+  }
+
+  // ---------- loop ----------
+  let running = false, last = performance.now(), clock = 0;
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now; clock += dt;
+    if (running) update(dt);
+    animateWorld(clock, running ? dt : 0);
+    updateClouds(dt); updateBirds(dt); updateParticles(dt);
+    ground.position.set(player.x, -0.6, player.z);
+    if (!player.dead) syncMesh(player, dt);
+    for (const a of ais) syncMesh(a, dt);
+    for (const rem of remotes.values()) syncRemote(rem, dt);
+    if (leader && leader.mesh && (leader !== player || !player.dead)) {
+      crown.visible = true;
+      crown.position.set(leader.x, leader.r * 2 + leader.r * 0.55, leader.z);
+      crown.scale.setScalar(Math.max(7, leader.r * 0.6)); crown.rotation.y += dt * 1.1;
+    } else crown.visible = false;
+    updateCamera(); updateSun();
+    renderer.render(scene, camera);
+    drawArrow(); drawMinimap(); updateHUD();
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- multiplayer (Trystero WebRTC, party code = room id) ----------
+  let net = null, partyMode = false, netAcc = 0;
+  const remotes = new Map();
+
+  function syncRemote(rem, dt) {
+    if (!rem.mesh) return;
+    const dx = rem.tx - rem.x, dz = rem.tz - rem.z;
+    rem.x += dx * 0.25; rem.z += dz * 0.25;                 // smooth toward last received position
+    rem.roll += Math.hypot(dx, dz) * 0.25 / Math.max(6, rem.r);
+    rem.dirx = Math.sin(rem.faceYaw); rem.dirz = Math.cos(rem.faceYaw);
+    rem.mesh.visible = !rem.dead;
+    if (!rem.dead) syncMesh(rem, dt);
+  }
+  function upsertRemote(id, d) {
+    let rem = remotes.get(id);
+    if (!rem) {
+      rem = { id, isPlayer: false, name: d.n || 'Player', colorHex: d.c || 0x88ccff,
+        x: d.x, z: d.z, tx: d.x, tz: d.z, r: d.r || 15, mass: d.m || 22, mouth: 0,
+        faceYaw: d.f || 0, dirx: 0, dirz: -1, roll: 0, dead: false, mesh: buildSmiley(d.c || 0x88ccff) };
+      remotes.set(id, rem);
+    }
+    rem.tx = d.x; rem.tz = d.z; rem.r = d.r; rem.mass = d.m; rem.name = d.n;
+    rem.mouth = d.mo || 0; rem.faceYaw = d.f || 0; rem.dead = !!d.d;
+  }
+  function removeRemote(id) { const rem = remotes.get(id); if (rem) { scene.remove(rem.mesh); remotes.delete(id); } }
+  function getEatenBy(id) {                                  // a bigger player ate me
+    sChomp();
+    if (net) net.sendEat({ by: id, mass: player.mass });
+    player.mass = 22; player.r = radiusFromMass(player.mass); player.mouth = 0; player.guard = 2.5;
+    const a = Math.random() * 6.28, dist = 500 + Math.random() * 400;
+    player.x += Math.cos(a) * dist; player.z += Math.sin(a) * dist;
+  }
+  function genCode() { const s = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c = '';
+    for (let i = 0; i < 4; i++) c += s[(Math.random() * s.length) | 0]; return c; }
+
+  function startParty(code) {
+    const T = window.Trystero; if (!T) return false;
+    if (net) { try { net.room.leave(); } catch (e) {} }
+    for (const id of [...remotes.keys()]) removeRemote(id);
+    const room = T.joinRoom({ appId: 'smiley-muncher-3d-party' }, code);
+    const [sendState, getState] = room.makeAction('st');
+    const [sendEat, getEat] = room.makeAction('eat');
+    net = { room, sendState, sendEat, code };
+    room.onPeerJoin(() => updatePartyCount());
+    room.onPeerLeave(id => { removeRemote(id); updatePartyCount(); });
+    getState((d, id) => { upsertRemote(id, d); updatePartyCount(); });
+    getEat((d) => { if (d.by === T.selfId) { player.mass += d.mass * 0.8; player.mouth = 1; sChomp(); } });
+    document.getElementById('partyCode').textContent = code;
+    document.getElementById('party').style.display = 'block';
+    updatePartyCount();
+    return true;
+  }
+  function updatePartyCount() {
+    const n = 1 + remotes.size;
+    document.getElementById('partyPlayers').textContent = n + (n === 1 ? ' player — waiting…' : ' players');
+  }
+
+  // ---------- state ----------
+  const overlay = document.getElementById('overlay');
+  function beginGame(isParty) { partyMode = isParty; initAudio(); resetGame();
+    overlay.classList.add('hidden'); running = true; last = performance.now();
+    if (isTouch()) dashBtn.style.display = 'block'; }
+  function startSolo() {
+    if (net) { try { net.room.leave(); } catch (e) {} net = null; }
+    for (const id of [...remotes.keys()]) removeRemote(id);
+    document.getElementById('party').style.display = 'none';
+    beginGame(false);
+  }
+  function endGame() { running = false;
+    document.querySelector('.smiley-title').textContent = '😋';
+    document.querySelector('#overlay h1').innerHTML = 'Munched!';
+    document.getElementById('subtitle').textContent = 'A bigger smiley ate you. Final score: ' + player.score + '. Size reached: ' + Math.round(player.r) + '.';
+    document.getElementById('playBtn').textContent = 'Play again'; overlay.classList.remove('hidden'); }
+
+  document.getElementById('playBtn').addEventListener('click', startSolo);
+  document.getElementById('createBtn').addEventListener('click', () => {
+    if (!window.Trystero) return; if (startParty(genCode())) beginGame(true);
+  });
+  document.getElementById('joinBtn').addEventListener('click', () => {
+    if (!window.Trystero) return;
+    const code = (document.getElementById('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (code.length < 3) { document.getElementById('codeInput').focus(); return; }
+    if (startParty(code)) beginGame(true);
+  });
+  function netReady() {
+    const s = document.getElementById('netStatus');
+    if (window.Trystero) { s.textContent = 'Multiplayer ready — create a party or join with a code'; s.classList.add('on'); }
+    else { s.textContent = 'Multiplayer unavailable (needs an internet connection).';
+      document.getElementById('createBtn').disabled = true; document.getElementById('joinBtn').disabled = true; }
+  }
+  window.addEventListener('trystero-ready', netReady);
+  window.addEventListener('trystero-failed', netReady);
+  if (window.Trystero) netReady();
+
+  resize(); requestAnimationFrame(loop);
+})();
+</script>
+
+<script type="module">
+  // Load Trystero (serverless WebRTC) for party multiplayer. Party code = room id.
+  try {
+    const mod = await import('https://esm.sh/trystero@0.21.5/nostr');
+    window.Trystero = { joinRoom: mod.joinRoom, selfId: mod.selfId };
+    window.dispatchEvent(new Event('trystero-ready'));
+  } catch (e) {
+    console.warn('Trystero failed to load — multiplayer disabled', e);
+    window.dispatchEvent(new Event('trystero-failed'));
+  }
+</script>
+</body>
+</html>
