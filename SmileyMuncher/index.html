@@ -156,7 +156,7 @@
   renderer.outputEncoding = THREE.sRGBEncoding;
   const scene = new THREE.Scene();
   const SKY_HORIZON = 0xbfd6ee;
-  // (fog removed)
+  scene.fog = new THREE.Fog(SKY_HORIZON, 1100, 3400);
 
   // sky gradient background
   scene.background = (() => {
@@ -552,7 +552,10 @@
   function resetGame() {
     for (const k of [...activeChunks.keys()]) deactivateChunk(k);
     chunks.clear();
-    Object.assign(player, { x: 0, z: 0, mass: 22, dead: false, score: 0, mouth: 0, dashT: 0, dashCd: 0, dirx: 0, dirz: -1, faceYaw: 0, roll: 0, guard: 0 });
+    Object.assign(player, { x: 0, z: 0, mass: 22, dead: false, score: 0, mouth: 0, dashT: 0, dashCd: 0, dashMult: 0, dirx: 0, dirz: -1, faceYaw: 0, roll: 0, guard: 0 });
+    // in a party, scatter the spawn and grant brief invulnerability so players don't pile up at the origin and instantly eat each other
+    if (partyMode) { const a = Math.random() * 6.28, dd = 260 + Math.random() * 340;
+      player.x = Math.cos(a) * dd; player.z = Math.sin(a) * dd; player.guard = 3; }
     player.r = radiusFromMass(player.mass); player.mesh.visible = true;
     for (const a of ais) scene.remove(a.mesh); ais.length = 0;
     if (!partyMode) for (let i = 0; i < AI_COUNT; i++) ais.push(makeAI());  // no bots in a party — real players instead
@@ -1005,7 +1008,12 @@
     });
     room.onPeerLeave(id => { lobbyPeers.delete(id); removeRemote(id); updateLobby(); updatePartyCount(); });
     getState((d, id) => { upsertRemote(id, d); updatePartyCount(); });
-    getEat(d => { if (d.by === T.selfId) { player.mass += d.mass * 0.8; player.mouth = 1; sChomp(); } });
+    getEat(d => {
+      if (d.by !== T.selfId || player.dead || (player.guard || 0) > 0) return;   // no gains while spawn-protected
+      const m = +d.mass; if (!isFinite(m) || m <= 0) return;
+      player.mass += Math.min(m, player.mass * 2 + 60) * 0.8;                     // clamp so one event can't balloon you
+      player.mouth = 1; sChomp();
+    });
     getGo(() => { if (net && !net.started) beginParty(); });
     getHi((name, id) => { lobbyPeers.set(id, name); updateLobby(); });
 
