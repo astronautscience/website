@@ -51,6 +51,10 @@
   .keys { font-size: 13px; opacity: .6; margin-top: 16px; line-height: 1.7; }
   #err { color: #ff9f9f; font-size: 13px; margin-top: 14px; display: none; }
   #partyBox { margin-top: 18px; border-top: 1px solid rgba(255,255,255,.12); padding-top: 16px; }
+  #quickBtn { font-size: 18px; font-weight: 800; color: #06222b; background: linear-gradient(180deg,#4de0c0,#22c1a6);
+    border: none; border-radius: 999px; padding: 12px 30px; cursor: pointer; box-shadow: 0 6px 18px rgba(45,220,190,.4); }
+  #quickBtn:active { transform: scale(.96); }
+  #quickBtn:disabled { opacity: .4; }
   button.alt { font-size: 15px; font-weight: 700; color: #fff; background: rgba(255,255,255,.12);
     border: 1px solid rgba(255,255,255,.18); border-radius: 999px; padding: 10px 22px; cursor: pointer; }
   button.alt:active { transform: scale(.96); }
@@ -108,7 +112,9 @@
     <p id="subtitle">Roll across an endless world of farms, suburbs, cities and oceans. Start tiny — eat people, crops and cars — then grow big enough to swallow houses, barns and whole skyscrapers. Anything bigger than you is solid: bonk off it until you're big enough. Biggest smiley wears the 👑.</p>
     <button id="playBtn">Play Solo</button>
     <div id="partyBox">
-      <button id="createBtn" class="alt">Create Party</button>
+      <button id="quickBtn">⚡ Quick Match</button>
+      <div style="opacity:.5;font-size:11px;margin:6px 0 12px">everyone who taps Quick Match plays together on one map</div>
+      <button id="createBtn" class="alt">Create Private Party</button>
       <div class="joinrow">
         <input id="codeInput" maxlength="5" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false">
         <button id="joinBtn" class="alt">Join</button>
@@ -1110,6 +1116,9 @@
     document.getElementById('playBtn').textContent = 'Play again'; overlay.classList.remove('hidden'); }
 
   document.getElementById('playBtn').addEventListener('click', startSolo);
+  document.getElementById('quickBtn').addEventListener('click', () => {
+    if (!window.Trystero) return; startParty('QUICK', false);   // shared public room — everyone joins the same map
+  });
   document.getElementById('createBtn').addEventListener('click', () => {
     if (!window.Trystero) return; startParty(genCode(), true);
   });
@@ -1123,8 +1132,9 @@
   document.getElementById('leaveBtn').addEventListener('click', leaveParty);
   function netReady() {
     const s = document.getElementById('netStatus');
-    if (window.Trystero) { s.textContent = 'Multiplayer ready — create a party or join with a code'; s.classList.add('on'); }
+    if (window.Trystero) { s.textContent = 'Multiplayer ready — Quick Match, or make a private party'; s.classList.add('on'); }
     else { s.textContent = 'Multiplayer unavailable (needs an internet connection).';
+      document.getElementById('quickBtn').disabled = true;
       document.getElementById('createBtn').disabled = true; document.getElementById('joinBtn').disabled = true; }
   }
   window.addEventListener('trystero-ready', netReady);
