@@ -308,17 +308,18 @@
 
   // ---------- prop catalog (accurate relative proportions) ----------
   // r = eat radius (how big you must be to swallow it). box props store bw/bd footprint, round props store cr.
+  // th = visual height (top). You can only eat something if you're TALLER than it (your height = 2*r).
   const CAT = {
-    person: { r: 3,  cr: 2.4 },
-    crop:   { r: 4,  cr: 5 },
-    hay:    { r: 5,  cr: 7 },
-    car:    { r: 9,  bw: 9,  bd: 20 },
-    tree:   { r: 12, cr: 12 },
-    boat:   { r: 13, bw: 16, bd: 48 },
-    house:  { r: 22, bw: 40, bd: 40 },
-    silo:   { r: 16, cr: 11 },
-    barn:   { r: 30, bw: 58, bd: 78 },
-    windmill: { r: 24, cr: 8 }
+    person: { r: 3,  cr: 2.4, th: 13 },
+    crop:   { r: 4,  cr: 5,   th: 11 },
+    hay:    { r: 5,  cr: 7,   th: 15 },
+    car:    { r: 9,  bw: 9,  bd: 20, th: 13 },
+    tree:   { r: 12, cr: 12,  th: 48 },
+    boat:   { r: 13, bw: 16, bd: 48, th: 26 },
+    house:  { r: 22, bw: 40, bd: 40, th: 46 },
+    silo:   { r: 16, cr: 11,  th: 68 },
+    barn:   { r: 30, bw: 58, bd: 78, th: 46 },
+    windmill: { r: 24, cr: 8, th: 84 }
     // building computed per-instance
   };
 
@@ -332,9 +333,10 @@
     const x0 = cx * CHUNK_PX, z0 = cy * CHUNK_PX;
     const add = (kind, x, z, extra) => {
       const base = CAT[kind] || {};
-      const p = Object.assign({ kind, x, z, cx, cy, r: base.r, cr: base.cr, bw: base.bw, bd: base.bd,
-        value: Math.max(.22, (base.r || 8) * (base.r || 8) * 0.019), ci: (rand() * 6) | 0, mesh: null,
+      const p = Object.assign({ kind, x, z, cx, cy, r: base.r, cr: base.cr, bw: base.bw, bd: base.bd, th: base.th,
+        value: Math.max(.15, (base.r || 8) * (base.r || 8) * 0.009), ci: (rand() * 6) | 0, mesh: null,
         phase: rand() * 6.28, ang: rand() * 6.28, spd: 0 }, extra);
+      if (kind === 'tree') p.th = 48 * (p.ts || 1);       // trees vary in height
       if (kind === 'person') p.spd = 9 + rand() * 8;
       else if (kind === 'car') p.spd = 34 + rand() * 50;
       props.push(p);
@@ -351,7 +353,7 @@
         if (rand() < 0.12) continue;
         const w = 46 + rand() * 46, h = 60 + rand() * 300, r = Math.max(w * 0.5, h * 0.16);
         add('building', x0 + gx * cell + cell / 2 + jit(10), z0 + gz * cell + cell / 2 + jit(10),
-          { w, h, r, bw: w, bd: w, value: Math.max(10, r * r * 0.017) });
+          { w, h, r, th: h, bw: w, bd: w, value: Math.max(6, r * r * 0.008) });
       }
       for (let i = 0; i < 6; i++) { const [x, z] = spot(); add('car', x, z, { rot: (rand() < .5 ? 0 : Math.PI / 2) }); }
       for (let i = 0; i < 10; i++) { const [x, z] = spot(); add('person', x, z); }
@@ -604,7 +606,8 @@
       const f = getChunk(cx + dx, cy + dy).foods;
       for (let i = f.length - 1; i >= 0; i--) {
         const food = f[i], ddx = food.x - ent.x, ddz = food.z - ent.z;
-        if (ent.r > food.r && ddx*ddx + ddz*ddz < (ent.r + food.r * 0.4) ** 2) {
+        // must be TALLER than it to eat (your height = 2*r)
+        if (2 * ent.r > (food.th || food.r * 2) && ddx*ddx + ddz*ddz < (ent.r + food.r * 0.4) ** 2) {
           ent.mass += food.value; ent.mouth = Math.min(1, ent.mouth + 0.5);
           if (food.mesh && food.mesh.parent) food.mesh.parent.remove(food.mesh); food.mesh = null;
           f.splice(i, 1); ate += food.value; if (gainScore) ent.score += Math.round(food.value * 4);
@@ -618,7 +621,7 @@
     const cx = worldToChunk(ent.x), cy = worldToChunk(ent.z); let best = null, bd = Infinity;
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
       const f = getChunk(cx + dx, cy + dy).foods;
-      for (let i = 0; i < f.length; i++) { if (f[i].r >= ent.r) continue;
+      for (let i = 0; i < f.length; i++) { if ((f[i].th || f[i].r * 2) >= 2 * ent.r) continue;
         const ddx = f[i].x - ent.x, ddz = f[i].z - ent.z, d = ddx*ddx + ddz*ddz; if (d < bd) { bd = d; best = f[i]; } }
     }
     return best;
@@ -629,7 +632,7 @@
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
       const f = getChunk(cx + dx, cy + dy).foods;
       for (let i = 0; i < f.length; i++) {
-        const p = f[i]; if (ent.r > p.r) continue;
+        const p = f[i]; if (2 * ent.r > (p.th || p.r * 2)) continue;   // tall enough to eat -> not solid
         let ddx = ent.x - p.x, ddz = ent.z - p.z;
         if (p.bw != null) {                       // box (rotated in 90° steps only)
           let hx = p.bw / 2, hz = p.bd / 2;
