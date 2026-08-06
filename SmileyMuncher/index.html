@@ -230,9 +230,10 @@
   // ---------- textures ----------
   function cvs(sz) { const c = document.createElement('canvas'); c.width = c.height = sz; return c; }
   const windowTex = (() => {
-    const c = cvs(64), g = c.getContext('2d'); g.fillStyle = '#5b6a82'; g.fillRect(0, 0, 64, 64);
+    // near-white wall so the bright building tint shows through; clean window grid
+    const c = cvs(64), g = c.getContext('2d'); g.fillStyle = '#f2f5f8'; g.fillRect(0, 0, 64, 64);
     for (let y = 5; y < 60; y += 9) for (let x = 5; x < 60; x += 9) {
-      g.fillStyle = (seedFor(x, y) % 4) ? '#c9d6e8' : '#8ea6c4'; g.fillRect(x, y, 6, 6);
+      g.fillStyle = (seedFor(x, y) % 4) ? '#cfe4f4' : '#7fa9cc'; g.fillRect(x, y, 6, 6);
     }
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3, 8); return t;
   })();
@@ -284,9 +285,12 @@
   };
   const std = (o) => new THREE.MeshStandardMaterial(o);
   const M = {
-    build: [std({ map: windowTex, color: 0x9fb0cc }), std({ map: windowTex, color: 0xb9c4d4 }),
-            std({ map: windowTex, color: 0x8493ad }), std({ map: windowTex, color: 0xa7a2b4 })],
-    roofFlat: std({ color: 0x3a3f49, roughness: .9 }),
+    // bright, colorful hole.io-style tower blocks
+    build: [std({ map: windowTex, color: 0x5ec8d8 }), std({ map: windowTex, color: 0xff9a52 }),
+            std({ map: windowTex, color: 0xf47ea6 }), std({ map: windowTex, color: 0x8fd15a }),
+            std({ map: windowTex, color: 0x6a9cf0 }), std({ map: windowTex, color: 0xf6d353 }),
+            std({ map: windowTex, color: 0xb98ce0 }), std({ map: windowTex, color: 0xe8eef2 })],
+    roofFlat: std({ color: 0x52596b, roughness: .9 }),
     wall: [std({ color: 0xe4d3ad, roughness: .85 }), std({ color: 0xd9b48c, roughness: .85 }),
            std({ color: 0xc7d2d6, roughness: .85 }), std({ color: 0xcf9e86, roughness: .85 })],
     roof: [std({ color: 0xb0392b, roughness: .8 }), std({ color: 0x5a6b7a, roughness: .8 }), std({ color: 0x6b4a2b, roughness: .8 })],
