@@ -153,38 +153,36 @@
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.outputEncoding = THREE.sRGBEncoding;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;   // filmic tone mapping for realistic light
-  renderer.toneMappingExposure = 1.08;
+  renderer.outputEncoding = THREE.sRGBEncoding;             // no tone mapping — keep colors bright & vibrant
   const scene = new THREE.Scene();
-  const SKY_HORIZON = 0xcde2f2;
+  const SKY_HORIZON = 0xbfe0f5;
 
-  // realistic sky gradient (deep zenith -> pale hazy horizon)
+  // bright, punchy sky gradient
   scene.background = (() => {
     const c = document.createElement('canvas'); c.width = 8; c.height = 512;
     const g = c.getContext('2d'), grd = g.createLinearGradient(0, 0, 0, 512);
-    grd.addColorStop(0, '#3f7fc9'); grd.addColorStop(0.45, '#79aede');
-    grd.addColorStop(0.78, '#b6d3ec'); grd.addColorStop(1, '#dce9f3');
+    grd.addColorStop(0, '#2f8fe6'); grd.addColorStop(0.5, '#5fb0ef');
+    grd.addColorStop(0.82, '#a5d6f5'); grd.addColorStop(1, '#d3ecfb');
     g.fillStyle = grd; g.fillRect(0, 0, 8, 512);
     return new THREE.CanvasTexture(c);
   })();
-  // atmospheric haze — distant things fade into the sky (depth cue = realism)
-  scene.fog = new THREE.Fog(SKY_HORIZON, 1400, 4200);
+  // light haze so the horizon isn't a hard line (kept far so nearby colors stay vivid)
+  scene.fog = new THREE.Fog(SKY_HORIZON, 1900, 4600);
 
   const camera = new THREE.PerspectiveCamera(52, 1, 1, 8000);
 
-  // sky-blue ambient from above, warm bounce from the ground
-  scene.add(new THREE.HemisphereLight(0xcfe4ff, 0x6b6144, 0.62));
-  scene.add(new THREE.AmbientLight(0xffffff, 0.1));
-  const sun = new THREE.DirectionalLight(0xfff1d0, 1.55);   // warm late-morning key light
+  // bright, saturated daylight
+  scene.add(new THREE.HemisphereLight(0xdff0ff, 0x6b6144, 0.95));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.32));
+  const sun = new THREE.DirectionalLight(0xfff6e0, 1.15);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
   sun.shadow.bias = -0.0004;
-  sun.shadow.radius = 3;                                    // soft shadow edges
+  sun.shadow.radius = 2;
   const sunTarget = new THREE.Object3D(); scene.add(sunTarget); sun.target = sunTarget;
   scene.add(sun);
-  // subtle cool sky-fill from the opposite side so shadows aren't pure black
-  const fill = new THREE.DirectionalLight(0x9fc0e8, 0.28);
+  // soft sky-fill so shadows stay colorful, not black
+  const fill = new THREE.DirectionalLight(0xbfe0ff, 0.4);
   fill.position.set(-120, 120, -80); scene.add(fill);
 
   function resize() {
