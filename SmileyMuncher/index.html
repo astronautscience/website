@@ -322,6 +322,8 @@
     windmill: { r: 24, cr: 8, th: 84 }
     // building computed per-instance
   };
+  // mass a smiley would need to be this tall — an object's "weight". radiusFromMass(m)=sqrt(m)*3.4, height=2r.
+  const massFromHeight = th => Math.pow((th / 2) / 3.4, 2);
 
   // ---------- chunk streaming ----------
   const chunks = new Map();
@@ -337,6 +339,7 @@
         value: Math.max(.15, (base.r || 8) * (base.r || 8) * 0.009), ci: (rand() * 6) | 0, mesh: null,
         phase: rand() * 6.28, ang: rand() * 6.28, spd: 0 }, extra);
       if (kind === 'tree') p.th = 48 * (p.ts || 1);       // trees vary in height
+      p.pmass = massFromHeight(p.th);                     // how heavy it is — you must out-mass it to eat it
       if (kind === 'person') p.spd = 9 + rand() * 8;
       else if (kind === 'car') p.spd = 34 + rand() * 50;
       props.push(p);
@@ -606,8 +609,8 @@
       const f = getChunk(cx + dx, cy + dy).foods;
       for (let i = f.length - 1; i >= 0; i--) {
         const food = f[i], ddx = food.x - ent.x, ddz = food.z - ent.z;
-        // must be TALLER than it to eat (your height = 2*r)
-        if (2 * ent.r > (food.th || food.r * 2) && ddx*ddx + ddz*ddz < (ent.r + food.r * 0.4) ** 2) {
+        // must be TALLER (height = 2*r) AND heavier (more mass) than it to eat
+        if (2 * ent.r > (food.th || food.r * 2) && ent.mass > (food.pmass || 0) && ddx*ddx + ddz*ddz < (ent.r + food.r * 0.4) ** 2) {
           ent.mass += food.value; ent.mouth = Math.min(1, ent.mouth + 0.5);
           if (food.mesh && food.mesh.parent) food.mesh.parent.remove(food.mesh); food.mesh = null;
           f.splice(i, 1); ate += food.value; if (gainScore) ent.score += Math.round(food.value * 4);
@@ -621,7 +624,7 @@
     const cx = worldToChunk(ent.x), cy = worldToChunk(ent.z); let best = null, bd = Infinity;
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
       const f = getChunk(cx + dx, cy + dy).foods;
-      for (let i = 0; i < f.length; i++) { if ((f[i].th || f[i].r * 2) >= 2 * ent.r) continue;
+      for (let i = 0; i < f.length; i++) { if ((f[i].th || f[i].r * 2) >= 2 * ent.r || (f[i].pmass || 0) >= ent.mass) continue;
         const ddx = f[i].x - ent.x, ddz = f[i].z - ent.z, d = ddx*ddx + ddz*ddz; if (d < bd) { bd = d; best = f[i]; } }
     }
     return best;
@@ -632,7 +635,7 @@
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
       const f = getChunk(cx + dx, cy + dy).foods;
       for (let i = 0; i < f.length; i++) {
-        const p = f[i]; if (2 * ent.r > (p.th || p.r * 2)) continue;   // tall enough to eat -> not solid
+        const p = f[i]; if (2 * ent.r > (p.th || p.r * 2) && ent.mass > (p.pmass || 0)) continue;   // tall & heavy enough to eat -> not solid
         let ddx = ent.x - p.x, ddz = ent.z - p.z;
         if (p.bw != null) {                       // box (rotated in 90° steps only)
           let hx = p.bw / 2, hz = p.bd / 2;
