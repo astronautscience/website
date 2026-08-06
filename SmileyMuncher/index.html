@@ -285,12 +285,11 @@
   };
   const std = (o) => new THREE.MeshStandardMaterial(o);
   const M = {
-    // bright, colorful hole.io-style tower blocks
-    build: [std({ map: windowTex, color: 0x5ec8d8 }), std({ map: windowTex, color: 0xff9a52 }),
-            std({ map: windowTex, color: 0xf47ea6 }), std({ map: windowTex, color: 0x8fd15a }),
-            std({ map: windowTex, color: 0x6a9cf0 }), std({ map: windowTex, color: 0xf6d353 }),
-            std({ map: windowTex, color: 0xb98ce0 }), std({ map: windowTex, color: 0xe8eef2 })],
-    roofFlat: std({ color: 0x52596b, roughness: .9 }),
+    // realistic, cohesive city tones — concrete, glass, tan, off-white
+    build: [std({ map: windowTex, color: 0xc3c7cd }), std({ map: windowTex, color: 0x9fb4c4 }),
+            std({ map: windowTex, color: 0xcabfa6 }), std({ map: windowTex, color: 0xdfe3e6 }),
+            std({ map: windowTex, color: 0xaeb6b8 }), std({ map: windowTex, color: 0xb59a80 })],
+    roofFlat: std({ color: 0x4c5058, roughness: .95 }),
     wall: [std({ color: 0xe4d3ad, roughness: .85 }), std({ color: 0xd9b48c, roughness: .85 }),
            std({ color: 0xc7d2d6, roughness: .85 }), std({ color: 0xcf9e86, roughness: .85 })],
     roof: [std({ color: 0xb0392b, roughness: .8 }), std({ color: 0x5a6b7a, roughness: .8 }), std({ color: 0x6b4a2b, roughness: .8 })],
@@ -325,7 +324,7 @@
   // r = eat radius (how big you must be to swallow it). box props store bw/bd footprint, round props store cr.
   // th = visual height (top). You can only eat something if you're TALLER than it (your height = 2*r).
   const CAT = {
-    person: { r: 3,  cr: 2.4, th: 13 },
+    person: { r: 3,  cr: 2.4, th: 15 },
     crop:   { r: 4,  cr: 5,   th: 11 },
     hay:    { r: 5,  cr: 7,   th: 15 },
     car:    { r: 9,  bw: 9,  bd: 20, th: 13 },
@@ -447,12 +446,15 @@
         for (const o of [[0, 0], [-3, 3], [3, -2], [2, 3]]) { const c = part(G.cone, lm); c.scale.set(3, 9, 3); c.position.set(o[0], 5, o[1]); g.add(c); }
         break; }
       case 'car': {
-        const body = part(G.box, M.car[p.ci % M.car.length]); body.scale.set(9, 5, 20); body.position.y = 5; g.add(body);
-        const cab = part(G.box, M.glass); cab.scale.set(8, 5.5, 11); cab.position.set(0, 10, -1); g.add(cab);
-        for (const o of [[-4.5, 6.5], [4.5, 6.5], [-4.5, -6.5], [4.5, -6.5]]) {
-          const w = part(G.cyl, M.tyre); w.scale.set(2.6, 2.2, 2.6); w.rotation.z = Math.PI / 2; w.position.set(o[0], 2.4, o[1]); g.add(w); }
-        for (const hx of [-2.6, 2.6]) { const hl = part(G.box, M.headlight); hl.scale.set(2, 1.6, 1); hl.position.set(hx, 5, 10.1); g.add(hl); }
-        for (const tx of [-2.6, 2.6]) { const tl = part(G.box, M.taillight); tl.scale.set(2, 1.6, 1); tl.position.set(tx, 5, -10.1); g.add(tl); }
+        const paint = M.car[p.ci % M.car.length];
+        const lower = part(G.box, paint); lower.scale.set(8.4, 3.4, 21); lower.position.y = 4; g.add(lower);          // chassis / hood level
+        const green = part(G.box, paint); green.scale.set(7.8, 3.2, 10.5); green.position.set(0, 6.9, -1.2); g.add(green); // cabin body
+        const glass = part(G.box, M.glass); glass.scale.set(7.4, 2.9, 9); glass.position.set(0, 7.1, -1.2); g.add(glass); // windows wrap
+        for (const bz of [10.4, -10.4]) { const bmp = part(G.box, M.tyre); bmp.scale.set(8, 1.6, 1.2); bmp.position.set(0, 3.2, bz); g.add(bmp); } // bumpers
+        for (const o of [[-4.3, 6.3], [4.3, 6.3], [-4.3, -6.3], [4.3, -6.3]]) {
+          const w = part(G.cyl, M.tyre); w.scale.set(2.7, 1.6, 2.7); w.rotation.z = Math.PI / 2; w.position.set(o[0], 2.5, o[1]); g.add(w); }
+        for (const hx of [-2.7, 2.7]) { const hl = part(G.box, M.headlight); hl.scale.set(1.8, 1.4, 1); hl.position.set(hx, 4, 10.6); g.add(hl); }
+        for (const tx of [-2.7, 2.7]) { const tl = part(G.box, M.taillight); tl.scale.set(1.8, 1.4, 1); tl.position.set(tx, 4, -10.6); g.add(tl); }
         g.rotation.y = p.rot || 0; break; }
       case 'boat': {
         const hull = part(G.box, M.boat); hull.scale.set(16, 10, 46); hull.position.y = 5; g.add(hull);
@@ -461,14 +463,20 @@
         g.rotation.y = p.rot || 0; break; }
       case 'person': {
         const pant = R(M.pants), shirt = R(M.shirt), skin = R(M.skin);
-        const mkLimb = (sx, y, mat, len) => { const grp = new THREE.Group(); grp.position.set(sx, y, 0);
-          const seg = part(G.box, mat); seg.scale.set(1.5, len, 1.8); seg.position.y = -len / 2; grp.add(seg); return grp; };
-        const legL = mkLimb(-1, 4.6, pant, 4.6), legR = mkLimb(1, 4.6, pant, 4.6);
-        const armL = mkLimb(-2.6, 9.4, shirt, 4.2), armR = mkLimb(2.6, 9.4, shirt, 4.2);
+        // limb group pivots at the hip/shoulder so it swings; a foot/hand caps the end
+        const mkLimb = (sx, y, mat, len, w, foot) => { const grp = new THREE.Group(); grp.position.set(sx, y, 0);
+          const seg = part(G.box, mat); seg.scale.set(w, len, w); seg.position.y = -len / 2; grp.add(seg);
+          if (foot) { const f = part(G.box, M.tyre); f.scale.set(w * 1.1, 1.2, w * 2.1); f.position.set(0, -len + 0.4, 1); grp.add(f); }
+          return grp; };
+        const legL = mkLimb(-1.1, 5, pant, 5, 1.5, true), legR = mkLimb(1.1, 5, pant, 5, 1.5, true);
+        const armL = mkLimb(-2.7, 10.2, shirt, 4.6, 1.2, false), armR = mkLimb(2.7, 10.2, shirt, 4.6, 1.2, false);
+        armL.rotation.z = 0.12; armR.rotation.z = -0.12;                 // arms rest slightly out
         g.add(legL); g.add(legR); g.add(armL); g.add(armR);
-        const torso = part(G.box, shirt); torso.scale.set(4, 5, 2.6); torso.position.y = 7.3; g.add(torso);
-        const head = part(G.sph, skin); head.scale.setScalar(1.7); head.position.y = 11.2; g.add(head);
-        const hair = part(G.sph, R(M.hair)); hair.scale.set(1.85, 1.15, 1.85); hair.position.y = 12; g.add(hair);
+        const hips = part(G.box, pant); hips.scale.set(3.8, 2.4, 2.2); hips.position.y = 6.1; g.add(hips);
+        const torso = part(G.box, shirt); torso.scale.set(3.9, 5, 2.3); torso.position.y = 9; g.add(torso);
+        const neck = part(G.cyl, skin); neck.scale.set(0.9, 1.4, 0.9); neck.position.y = 11.6; g.add(neck);
+        const head = part(G.sph, skin); head.scale.set(1.55, 1.75, 1.55); head.position.y = 13; g.add(head);
+        const hair = part(G.sph, R(M.hair)); hair.scale.set(1.7, 1.15, 1.7); hair.position.y = 13.6; g.add(hair);
         g.userData = { legL, legR, armL, armR }; break; }
       case 'windmill': {
         const pole = part(G.cyl, M.wall[2]); pole.scale.set(3.4, 60, 3.4); pole.position.y = 30; g.add(pole);
