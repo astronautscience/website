@@ -154,29 +154,38 @@
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;   // filmic tone mapping for realistic light
+  renderer.toneMappingExposure = 1.08;
   const scene = new THREE.Scene();
-  const SKY_HORIZON = 0xbfd6ee;
-  // (fog removed)
+  const SKY_HORIZON = 0xcde2f2;
 
-  // sky gradient background
+  // realistic sky gradient (deep zenith -> pale hazy horizon)
   scene.background = (() => {
-    const c = document.createElement('canvas'); c.width = 8; c.height = 256;
-    const g = c.getContext('2d'), grd = g.createLinearGradient(0, 0, 0, 256);
-    grd.addColorStop(0, '#4f8fd6'); grd.addColorStop(0.55, '#8fbbe6'); grd.addColorStop(1, '#cfe3f4');
-    g.fillStyle = grd; g.fillRect(0, 0, 8, 256);
+    const c = document.createElement('canvas'); c.width = 8; c.height = 512;
+    const g = c.getContext('2d'), grd = g.createLinearGradient(0, 0, 0, 512);
+    grd.addColorStop(0, '#3f7fc9'); grd.addColorStop(0.45, '#79aede');
+    grd.addColorStop(0.78, '#b6d3ec'); grd.addColorStop(1, '#dce9f3');
+    g.fillStyle = grd; g.fillRect(0, 0, 8, 512);
     return new THREE.CanvasTexture(c);
   })();
+  // atmospheric haze — distant things fade into the sky (depth cue = realism)
+  scene.fog = new THREE.Fog(SKY_HORIZON, 1400, 4200);
 
-  const camera = new THREE.PerspectiveCamera(55, 1, 1, 7000);
+  const camera = new THREE.PerspectiveCamera(52, 1, 1, 8000);
 
-  scene.add(new THREE.HemisphereLight(0xdcebff, 0x55503f, 0.75));
-  scene.add(new THREE.AmbientLight(0xffffff, 0.18));
-  const sun = new THREE.DirectionalLight(0xfff2d8, 1.05);
+  // sky-blue ambient from above, warm bounce from the ground
+  scene.add(new THREE.HemisphereLight(0xcfe4ff, 0x6b6144, 0.62));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.1));
+  const sun = new THREE.DirectionalLight(0xfff1d0, 1.55);   // warm late-morning key light
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
-  sun.shadow.bias = -0.0006;
+  sun.shadow.bias = -0.0004;
+  sun.shadow.radius = 3;                                    // soft shadow edges
   const sunTarget = new THREE.Object3D(); scene.add(sunTarget); sun.target = sunTarget;
   scene.add(sun);
+  // subtle cool sky-fill from the opposite side so shadows aren't pure black
+  const fill = new THREE.DirectionalLight(0x9fc0e8, 0.28);
+  fill.position.set(-120, 120, -80); scene.add(fill);
 
   function resize() {
     DPR = Math.min(window.devicePixelRatio || 1, 2);
@@ -292,8 +301,12 @@
     car: [std({ color: 0xd94f4f, roughness: .5, metalness: .3 }), std({ color: 0x4d9dff, roughness: .5, metalness: .3 }),
           std({ color: 0xf0d24a, roughness: .5, metalness: .3 }), std({ color: 0xe8e8ee, roughness: .5, metalness: .3 }),
           std({ color: 0x5ac07f, roughness: .5, metalness: .3 })],
-    glass: std({ color: 0x22303f, roughness: .15, metalness: .5 }),
-    tyre: std({ color: 0x181818 }),
+    glass: std({ color: 0x1c2a3a, roughness: .08, metalness: .7 }),
+    winGlass: std({ color: 0x8fb6d8, roughness: .1, metalness: .6, emissive: 0x24313f, emissiveIntensity: .5 }),
+    tyre: std({ color: 0x141414, roughness: .8 }),
+    headlight: std({ color: 0xffffff, emissive: 0xfff2c0, emissiveIntensity: .9, roughness: .3 }),
+    taillight: std({ color: 0x7a0e0e, emissive: 0xff2222, emissiveIntensity: .8, roughness: .3 }),
+    hair: [std({ color: 0x2b1c10 }), std({ color: 0x0f0f10 }), std({ color: 0x6b4a2b }), std({ color: 0x8a5a2b }), std({ color: 0xb0842f })],
     boat: std({ color: 0x8a5230, roughness: .8 }), cabin: std({ color: 0xf2f2f2 }),
     skin: [std({ color: 0xf2c8a0 }), std({ color: 0xd6a06a }), std({ color: 0x9c6a42 })],
     shirt: [std({ color: 0xff6b6b }), std({ color: 0x4d9dff }), std({ color: 0x5ac07f }), std({ color: 0xffd93d }), std({ color: 0xc86bff }), std({ color: 0xeeeeee })],
@@ -402,16 +415,21 @@
       case 'house': {
         const wall = part(G.box, M.wall[p.ci % M.wall.length]); wall.scale.set(40, 26, 40); wall.position.y = 13; g.add(wall);
         const roof = part(G.pyr, M.roof[p.rci % M.roof.length]); roof.scale.set(36, 20, 36); roof.rotation.y = Math.PI / 4; roof.position.y = 36; g.add(roof);
-        const door = part(G.box, M.trunk); door.scale.set(7, 12, 1); door.position.set(0, 6, 20.2); g.add(door);
+        const door = part(G.box, M.trunk); door.scale.set(7, 12, 1); door.position.set(0, 6, 20.4); g.add(door);
+        // windows
+        for (const wx of [-13, 13]) { const win = part(G.box, M.winGlass); win.scale.set(8, 8, 1); win.position.set(wx, 15, 20.4); g.add(win); }
+        // little chimney
+        const ch = part(G.box, M.wall[1]); ch.scale.set(5, 12, 5); ch.position.set(11, 40, 4); g.add(ch);
         break; }
       case 'tree': {
         const s = p.ts || 1;
-        const t = part(G.cyl, M.trunk); t.scale.set(4 * s, 20 * s, 4 * s); t.position.y = 10 * s; g.add(t);
+        const t = part(G.cyl, M.trunk); t.scale.set(3.4 * s, 22 * s, 3.4 * s); t.position.y = 11 * s; g.add(t);
         const lm = M.leaf[p.ci % M.leaf.length];
-        for (const o of [[0, 30, 0, 15], [-8, 26, 5, 11], [7, 28, -6, 10], [3, 36, 4, 9]]) {
+        // fuller, layered canopy
+        for (const o of [[0, 32, 0, 15], [-9, 27, 5, 11], [8, 29, -6, 10.5], [3, 38, 4, 10], [-4, 24, -7, 8.5], [6, 34, 6, 8]]) {
           const l = part(G.sph, lm); l.scale.setScalar(o[3] * s); l.position.set(o[0] * s, o[1] * s, o[2] * s); g.add(l);
         }
-        break; }
+        g.rotation.y = p.phase || 0; break; }
       case 'barn': {
         const b = part(G.box, M.barn); b.scale.set(58, 34, 78); b.position.y = 17; g.add(b);
         const roof = part(G.pyr, M.barnRoof); roof.scale.set(66, 20, 86); roof.rotation.y = Math.PI / 4; roof.position.y = 44; g.add(roof);
@@ -427,10 +445,12 @@
         for (const o of [[0, 0], [-3, 3], [3, -2], [2, 3]]) { const c = part(G.cone, lm); c.scale.set(3, 9, 3); c.position.set(o[0], 5, o[1]); g.add(c); }
         break; }
       case 'car': {
-        const body = part(G.box, M.car[p.ci % M.car.length]); body.scale.set(9, 6, 20); body.position.y = 5; g.add(body);
-        const cab = part(G.box, M.glass); cab.scale.set(8, 6, 10); cab.position.set(0, 10.5, -1); g.add(cab);
-        for (const o of [[-4.5, 6], [4.5, 6], [-4.5, -6], [4.5, -6]]) {
-          const w = part(G.cyl, M.tyre); w.scale.set(2.4, 2.4, 2.4); w.rotation.z = Math.PI / 2; w.position.set(o[0], 2.4, o[1]); g.add(w); }
+        const body = part(G.box, M.car[p.ci % M.car.length]); body.scale.set(9, 5, 20); body.position.y = 5; g.add(body);
+        const cab = part(G.box, M.glass); cab.scale.set(8, 5.5, 11); cab.position.set(0, 10, -1); g.add(cab);
+        for (const o of [[-4.5, 6.5], [4.5, 6.5], [-4.5, -6.5], [4.5, -6.5]]) {
+          const w = part(G.cyl, M.tyre); w.scale.set(2.6, 2.2, 2.6); w.rotation.z = Math.PI / 2; w.position.set(o[0], 2.4, o[1]); g.add(w); }
+        for (const hx of [-2.6, 2.6]) { const hl = part(G.box, M.headlight); hl.scale.set(2, 1.6, 1); hl.position.set(hx, 5, 10.1); g.add(hl); }
+        for (const tx of [-2.6, 2.6]) { const tl = part(G.box, M.taillight); tl.scale.set(2, 1.6, 1); tl.position.set(tx, 5, -10.1); g.add(tl); }
         g.rotation.y = p.rot || 0; break; }
       case 'boat': {
         const hull = part(G.box, M.boat); hull.scale.set(16, 10, 46); hull.position.y = 5; g.add(hull);
@@ -446,6 +466,7 @@
         g.add(legL); g.add(legR); g.add(armL); g.add(armR);
         const torso = part(G.box, shirt); torso.scale.set(4, 5, 2.6); torso.position.y = 7.3; g.add(torso);
         const head = part(G.sph, skin); head.scale.setScalar(1.7); head.position.y = 11.2; g.add(head);
+        const hair = part(G.sph, R(M.hair)); hair.scale.set(1.85, 1.15, 1.85); hair.position.y = 12; g.add(hair);
         g.userData = { legL, legR, armL, armR }; break; }
       case 'windmill': {
         const pole = part(G.cyl, M.wall[2]); pole.scale.set(3.4, 60, 3.4); pole.position.y = 30; g.add(pole);
